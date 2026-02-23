@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Importar productos | Pañol ERP{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-6 space-y-4">
+  <div>
+    <h1 class="text-2xl font-semibold">Importar productos (CSV)</h1>
+    <p class="text-sm text-slate-600 dark:text-slate-300">
+      Columnas esperadas: codigo, nombre, descripcion, categoria, subcategoria, unidad_medida, proveedor, stock_minimo, maneja_vencimiento, is_active
+    </p>
+  </div>
+
+  {% include "inventario/_nav.html" %}
+
+  <form method="post" enctype="multipart/form-data" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm p-4 space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="ti-label">Archivo CSV (UTF-8)</label>
+      <input type="file" name="file" class="ti-input" accept=".csv" required>
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:justify-end gap-2">
+      <a href="{% url 'inventario:producto_list' %}" class="ti-btn">Cancelar</a>
+      <button type="submit" class="ti-btn-primary">Importar</button>
+    </div>
+  </form>
+
+  {% if preview_errors %}
+  <div class="rounded-2xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 p-4">
+    <div class="font-semibold text-rose-900 dark:text-rose-200">Errores detectados</div>
+    <div class="mt-2 text-sm text-rose-800 dark:text-rose-200">
+      {% for row in preview_errors %}
+        <div class="mt-2">
+          <div class="font-medium">Fila {{ row.row }}</div>
+          <ul class="list-disc pl-5">
+            {% for e in row.errors %}
+              <li>{{ e }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

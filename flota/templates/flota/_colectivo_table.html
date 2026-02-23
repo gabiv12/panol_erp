@@ -1,0 +1,94 @@
+{% load static %}
+{% load humanize %}
+
+<!-- Desktop/tablet: tabla -->
+<div class="hidden md:block rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-800">
+        <tr>
+          <th class="text-left px-4 py-3">Interno</th>
+          <th class="text-left px-4 py-3">Dominio</th>
+          <th class="text-left px-4 py-3">Año</th>
+          <th class="text-left px-4 py-3">Marca/Modelo</th>
+          <th class="text-left px-4 py-3">Chasis</th>
+          <th class="text-left px-4 py-3">RT Vto</th>
+          <th class="text-left px-4 py-3">GPS</th>
+          <th class="text-left px-4 py-3">Biodiesel</th>
+          <th class="text-right px-4 py-3">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+        {% for c in colectivos %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/30">
+          <td class="px-4 py-3 font-semibold">{{ c.interno }}</td>
+          <td class="px-4 py-3">{{ c.dominio }}</td>
+          <td class="px-4 py-3">{{ c.anio_modelo }}</td>
+          <td class="px-4 py-3">
+            <div class="font-medium">{{ c.marca }}</div>
+            <div class="text-xs text-slate-600 dark:text-slate-300">{{ c.modelo }}</div>
+          </td>
+          <td class="px-4 py-3 font-mono text-xs">{{ c.numero_chasis }}</td>
+          <td class="px-4 py-3">{{ c.revision_tecnica_vto|default:"-" }}</td>
+          <td class="px-4 py-3">{{ c.tiene_gps|yesno:"Sí,No" }}</td>
+          <td class="px-4 py-3">{{ c.usa_biodiesel|yesno:"Sí,No" }}</td>
+          <td class="px-4 py-3 text-right">
+            {% if can_manage %}
+              <a class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900"
+                 href="{% url 'flota:colectivo_update' c.id %}">Editar</a>
+              <a class="px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-900/30 text-rose-700 dark:text-rose-200 ml-2"
+                 href="{% url 'flota:colectivo_delete' c.id %}">Eliminar</a>
+            {% else %}
+              <span class="text-xs text-slate-500 dark:text-slate-400">Solo lectura</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="px-4 py-6 text-slate-600 dark:text-slate-300" colspan="9">
+            No hay colectivos para mostrar.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Móvil: cards -->
+<div class="md:hidden space-y-3">
+  {% for c in colectivos %}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4">
+    <div class="flex items-start justify-between gap-2">
+      <div>
+        <div class="text-sm text-slate-600 dark:text-slate-300">Interno</div>
+        <div class="text-xl font-semibold">{{ c.interno }}</div>
+        <div class="text-sm font-medium">{{ c.dominio }}</div>
+      </div>
+      <div class="text-right text-xs text-slate-600 dark:text-slate-300">
+        <div>RT: {{ c.revision_tecnica_vto|default:"-" }}</div>
+        <div>GPS: {{ c.tiene_gps|yesno:"Sí,No" }}</div>
+        <div>Biodiesel: {{ c.usa_biodiesel|yesno:"Sí,No" }}</div>
+      </div>
+    </div>
+
+    <div class="mt-3 text-sm">
+      <div class="font-medium">{{ c.marca }} / {{ c.modelo }}</div>
+      <div class="text-xs text-slate-600 dark:text-slate-300 font-mono break-all">{{ c.numero_chasis }}</div>
+    </div>
+
+    {% if can_manage %}
+    <div class="mt-3 flex gap-2">
+      <a class="flex-1 text-center px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800"
+         href="{% url 'flota:colectivo_update' c.id %}">Editar</a>
+      <a class="flex-1 text-center px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-200"
+         href="{% url 'flota:colectivo_delete' c.id %}">Eliminar</a>
+    </div>
+    {% endif %}
+  </div>
+  {% empty %}
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-4">
+    <div class="text-sm text-slate-600 dark:text-slate-300">No hay colectivos.</div>
+  </div>
+  {% endfor %}
+</div>

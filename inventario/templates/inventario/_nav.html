@@ -1,0 +1,15 @@
+{# inventario/_nav.html #}
+
+<nav class="ti-card p-3 flex flex-wrap gap-2">
+  <a class="ti-btn {% if active_tab == 'productos' %}ti-btn-primary{% endif %}" href="{% url 'inventario:producto_list' %}">Productos</a>
+  <a class="ti-btn {% if active_tab == 'stock' %}ti-btn-primary{% endif %}" href="{% url 'inventario:stock_list' %}">Stock</a>
+  <a class="ti-btn {% if active_tab == 'movimientos' %}ti-btn-primary{% endif %}" href="{% url 'inventario:movimiento_list' %}">Movimientos</a>
+
+  <span class="mx-1 text-slate-300">|</span>
+
+  <a class="ti-btn {% if active_tab == 'config' %}ti-btn-primary{% endif %}" href="{% url 'inventario:categoria_list' %}">Categorías</a>
+  <a class="ti-btn {% if active_tab == 'config' %}ti-btn-primary{% endif %}" href="{% url 'inventario:subcategoria_list' %}">Subcategorías</a>
+  <a class="ti-btn {% if active_tab == 'config' %}ti-btn-primary{% endif %}" href="{% url 'inventario:unidad_list' %}">Unidades</a>
+  <a class="ti-btn {% if active_tab == 'config' %}ti-btn-primary{% endif %}" href="{% url 'inventario:ubicacion_list' %}">Ubicaciones</a>
+  <a class="ti-btn {% if active_tab == 'config' %}ti-btn-primary{% endif %}" href="{% url 'inventario:proveedor_list' %}">Proveedores</a>
+</nav>

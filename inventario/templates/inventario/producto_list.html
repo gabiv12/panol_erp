@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load inventario_extras %}
+{% block title %}Productos | Pañol ERP{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-6 space-y-4">
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-semibold">Productos</h1>
+      <p class="text-sm text-slate-600 dark:text-slate-300">Catálogo de inventario y control de stock.</p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      {% if perms.inventario.add_producto %}
+        <a href="{% url 'inventario:producto_create' %}" class="ti-btn-primary">Nuevo producto</a>
+      {% endif %}
+
+      <a href="{% url 'inventario:producto_etiquetas' %}?{{ request.GET.urlencode }}" class="ti-btn">Imprimir etiquetas</a>
+
+      {% if perms.inventario.can_import_productos %}
+        <a href="{% url 'inventario:producto_import' %}" class="ti-btn">Importar CSV</a>
+      {% endif %}
+      {% if perms.inventario.can_export_productos %}
+        <a href="{% url 'inventario:producto_export' %}" class="ti-btn">Exportar CSV</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% include "inventario/_nav.html" with active_tab="productos" %}
+
+  <form method="get" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm p-4">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div class="md:col-span-2">
+        <label class="ti-label" for="id_q">Buscar</label>
+        <input type="text" name="q" id="id_q" value="{{ request.GET.q }}" placeholder="Código, nombre o descripción"
+               class="ti-input" />
+      </div>
+
+      <div>
+        <label class="ti-label" for="id_categoria">Categoría</label>
+        {{ filterset.form.categoria }}
+      </div>
+
+      <div>
+        <label class="ti-label" for="id_proveedor">Proveedor</label>
+        {{ filterset.form.proveedor }}
+      </div>
+    </div>
+
+    <div class="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <label class="ti-label m-0">Activo</label>
+        {{ filterset.form.is_active }}
+      </div>
+
+      <div class="flex gap-2">
+        <button type="submit" class="ti-btn-primary">Filtrar</button>
+        <a href="{% url 'inventario:producto_list' %}" class="ti-btn">Limpiar</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300">
+        <tr>
+          <th class="text-left px-4 py-3">Foto</th>
+          <th class="text-left px-4 py-3">Código</th>
+          <th class="text-left px-4 py-3">Nombre</th>
+          <th class="text-left px-4 py-3">Categoría</th>
+          <th class="text-left px-4 py-3">Unidad</th>
+          <th class="text-right px-4 py-3">Stock total</th>
+          <th class="text-right px-4 py-3">Mínimo</th>
+          <th class="text-right px-4 py-3">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+        {% for p in object_list %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/30">
+          <td class="px-4 py-3">
+            {% with img=p.imagenes.all|first %}
+              {% if img and img.imagen %}
+                <img src="{{ img.imagen.url }}" alt="Foto"
+                     class="w-12 h-12 object-cover rounded-lg border border-slate-200 dark:border-slate-800" />
+              {% else %}
+                <div class="w-12 h-12 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center text-xs text-slate-500 dark:text-slate-400">
+                  —
+                </div>
+              {% endif %}
+            {% endwith %}
+          </td>
+
+          <td class="px-4 py-3 font-medium">{{ p.codigo }}</td>
+
+          <td class="px-4 py-3">
+            <div class="font-medium">{{ p.nombre }}</div>
+            {% if not p.is_active %}
+              <div class="text-xs text-slate-500 dark:text-slate-400">Inactivo</div>
+            {% endif %}
+          </td>
+
+          <td class="px-4 py-3">{{ p.categoria.nombre }}</td>
+          <td class="px-4 py-3">{{ p.unidad_medida.abreviatura }}</td>
+          <td class="px-4 py-3 text-right">{{ p.stock_total|default:0|qty:p.unidad_medida }}</td>
+          <td class="px-4 py-3 text-right">{{ p.stock_minimo }}</td>
+
+          <td class="px-4 py-3 text-right">
+            <div class="flex justify-end gap-2">
+              <a href="{% url 'inventario:producto_historial' p.id %}" class="ti-btn">Ver</a>
+              <a href="{% url 'inventario:producto_etiquetas' %}?q={{ p.codigo|urlencode }}" class="ti-btn">Etiqueta</a>
+              {% if perms.inventario.change_producto %}
+                <a href="{% url 'inventario:producto_update' p.id %}" class="ti-btn">Editar</a>
+              {% endif %}
+              {% if perms.inventario.delete_producto %}
+                <a href="{% url 'inventario:producto_delete' p.id %}" class="ti-btn-danger">Eliminar</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="px-4 py-6 text-slate-500 dark:text-slate-400" colspan="8">No hay productos.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

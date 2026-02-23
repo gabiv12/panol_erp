@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo parte | Flota{% endblock %}
+{% block page_title %}Nuevo parte diario{% endblock %}
+{% block page_subtitle %}Registrá incidencias, mantenimiento, checklist o auxilios.{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  <section class="ti-card p-4">
+    <form method="post" class="space-y-3">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="ti-alert ti-alert-error">
+          {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div>
+          <label class="text-xs ti-subtitle">Unidad</label>
+          {{ form.colectivo }}
+          {% if form.colectivo.errors %}<div class="text-xs text-red-400">{{ form.colectivo.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="text-xs ti-subtitle">Fecha/hora</label>
+          {{ form.fecha_evento }}
+          {% if form.fecha_evento.errors %}<div class="text-xs text-red-400">{{ form.fecha_evento.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="text-xs ti-subtitle">Odómetro (km)</label>
+          {{ form.odometro_km }}
+          {% if form.odometro_km.errors %}<div class="text-xs text-red-400">{{ form.odometro_km.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        <div>
+          <label class="text-xs ti-subtitle">Tipo</label>
+          {{ form.tipo }}
+          {% if form.tipo.errors %}<div class="text-xs text-red-400">{{ form.tipo.errors }}</div>{% endif %}
+        </div>
+        <div>
+          <label class="text-xs ti-subtitle">Severidad</label>
+          {{ form.severidad }}
+          {% if form.severidad.errors %}<div class="text-xs text-red-400">{{ form.severidad.errors }}</div>{% endif %}
+        </div>
+        <div>
+          <label class="text-xs ti-subtitle">Estado</label>
+          {{ form.estado }}
+          {% if form.estado.errors %}<div class="text-xs text-red-400">{{ form.estado.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="ti-card p-3">
+        <div class="text-sm font-semibold">Mantenimiento (solo si Tipo = Mantenimiento)</div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-2">
+          <div>
+            <label class="text-xs ti-subtitle">Acción</label>
+            {{ form.accion_mantenimiento }}
+            {% if form.accion_mantenimiento.errors %}<div class="text-xs text-red-400">{{ form.accion_mantenimiento.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label class="text-xs ti-subtitle">Km del cambio</label>
+            {{ form.km_mantenimiento }}
+            {% if form.km_mantenimiento.errors %}<div class="text-xs text-red-400">{{ form.km_mantenimiento.errors }}</div>{% endif %}
+          </div>
+          <div>
+            <label class="text-xs ti-subtitle">Matafuego vto (opcional)</label>
+            {{ form.matafuego_vto_nuevo }}
+            {% if form.matafuego_vto_nuevo.errors %}<div class="text-xs text-red-400">{{ form.matafuego_vto_nuevo.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="ti-card p-3">
+        <div class="text-sm font-semibold">Auxilio (solo si Tipo = Auxilio)</div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-2">
+          <div>
+            <label class="text-xs ti-subtitle">Inicio</label>
+            {{ form.auxilio_inicio }}
+          </div>
+          <div>
+            <label class="text-xs ti-subtitle">Fin</label>
+            {{ form.auxilio_fin }}
+            {% if form.auxilio_fin.errors %}<div class="text-xs text-red-400">{{ form.auxilio_fin.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs ti-subtitle">Descripción</label>
+        {{ form.descripcion }}
+        {% if form.descripcion.errors %}<div class="text-xs text-red-400">{{ form.descripcion.errors }}</div>{% endif %}
+      </div>
+
+      <div>
+        <label class="text-xs ti-subtitle">Observaciones</label>
+        {{ form.observaciones }}
+      </div>
+
+      <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+
+      <div class="flex gap-2">
+        <button class="ti-btn-primary" type="submit">Guardar</button>
+        <a class="ti-btn" href="{{ request.GET.next|default:'#' }}">Cancelar</a>
+      </div>
+
+    </form>
+  </section>
+
+</div>
+{% endblock %}

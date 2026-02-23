@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Iniciar sesión | Pañol ERP{% endblock %}
+{% block page_title %}Iniciar sesión{% endblock %}
+{% block page_subtitle %}Acceso al sistema{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100dvh-140px)] flex items-center justify-center py-10">
+  <div class="w-full max-w-md">
+    <div class="ti-card p-6">
+      <div class="mb-6">
+        <h1 class="text-2xl font-semibold">Iniciar sesión</h1>
+        <p class="mt-1 text-sm ti-subtitle">
+          Acceso al sistema de Pañol / Flota / Taller.
+        </p>
+      </div>
+
+      {% if form.errors %}
+        <div class="mb-4 ti-badge-critical rounded-2xl px-4 py-3 text-sm">
+          Usuario o contraseña inválidos. Verificá los datos e intentá nuevamente.
+        </div>
+      {% endif %}
+
+      {% if next %}
+        {% if user.is_authenticated %}
+          <div class="mb-4 ti-badge-high rounded-2xl px-4 py-3 text-sm">
+            Tu cuenta no tiene permisos para acceder a esa sección.
+          </div>
+        {% endif %}
+      {% endif %}
+
+      <form method="post" class="space-y-4" novalidate>
+        {% csrf_token %}
+
+        <div>
+          <label for="id_username" class="ti-label mb-1">Usuario</label>
+          <input id="id_username"
+                 name="username"
+                 type="text"
+                 autocomplete="username"
+                 required
+                 class="ti-input" />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label for="id_password" class="ti-label">Contraseña</label>
+            <button type="button"
+                    class="text-xs font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
+                    data-toggle-password
+                    data-target="#id_password">
+              Mostrar
+            </button>
+          </div>
+
+          <input id="id_password"
+                 name="password"
+                 type="password"
+                 autocomplete="current-password"
+                 required
+                 class="ti-input" />
+        </div>
+
+        <input type="hidden" name="next" value="{{ next }}"/>
+
+        <button type="submit" class="ti-btn-primary w-full py-2.5">
+          Entrar
+        </button>
+      </form>
+    </div>
+
+    <p class="mt-4 text-xs ti-subtitle text-center">
+      Ambiente de desarrollo. Acceso restringido por roles.
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'core/js/login.js' %}" defer></script>
+{% endblock %}

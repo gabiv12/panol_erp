@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Usuarios | Pañol ERP{% endblock %}
+{% block page_title %}Administración{% endblock %}
+{% block page_subtitle %}Usuarios y roles (base).{% endblock %}
+
+{% block content %}
+
+<section class="ti-card p-4">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <div>
+      <div class="text-sm font-semibold">Usuarios</div>
+      <div class="text-xs ti-subtitle">Gestión básica de accesos. (Alta/edición/baja)</div>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'usuarios:usuario_create' %}" class="ti-btn-primary">Nuevo usuario</a>
+    </div>
+  </div>
+
+  <form method="get" class="mt-4 flex flex-col md:flex-row gap-2" autocomplete="off">
+    <div class="flex-1">
+      <label class="ti-label" for="userSearch">Buscar</label>
+      <input
+        id="userSearch"
+        name="q"
+        value="{{ q }}"
+        class="ti-input"
+        placeholder="Usuario, nombre, apellido o email..."
+      />
+    </div>
+
+    <div class="flex items-end gap-2">
+      <button class="ti-btn" type="submit">Filtrar</button>
+      {% if q %}
+        <a class="ti-btn" href="{% url 'usuarios:usuario_list' %}">Limpiar</a>
+      {% endif %}
+    </div>
+  </form>
+</section>
+
+<section class="ti-card p-4">
+  <div class="flex items-center justify-between">
+    <div class="text-sm font-semibold">Listado</div>
+    <div class="text-xs ti-subtitle">Total: <span id="usuariosCount">{{ usuarios|length }}</span></div>
+  </div>
+
+  <div class="mt-3 overflow-x-auto">
+    <table class="ti-table" id="usuariosTable">
+      <thead class="ti-thead">
+        <tr>
+          <th class="ti-th">Usuario</th>
+          <th class="ti-th">Nombre</th>
+          <th class="ti-th">Email</th>
+          <th class="ti-th">Estado</th>
+          <th class="ti-th">Permisos</th>
+          <th class="ti-th text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+          <tr class="ti-tr" data-user-row data-username="{{ u.username|lower }}" data-name="{{ u.get_full_name|default:''|lower }}" data-email="{{ u.email|default:''|lower }}">
+            <td class="ti-td font-semibold">{{ u.username }}</td>
+            <td class="ti-td">{{ u.get_full_name|default:"—" }}</td>
+            <td class="ti-td">{{ u.email|default:"—" }}</td>
+            <td class="ti-td">
+              {% if u.is_active %}
+                <span class="ti-badge-ok">Activo</span>
+              {% else %}
+                <span class="ti-badge-muted">Inactivo</span>
+              {% endif %}
+            </td>
+            <td class="ti-td">
+              <div class="flex flex-wrap gap-2">
+                {% if u.is_superuser %}
+                  <span class="ti-badge-critical">Super</span>
+                {% elif u.is_staff %}
+                  <span class="ti-badge-high">Staff</span>
+                {% else %}
+                  <span class="ti-badge-muted">Básico</span>
+                {% endif %}
+              </div>
+            </td>
+            <td class="ti-td text-right">
+              <div class="inline-flex gap-2">
+                <a class="ti-btn" href="{% url 'usuarios:usuario_update' u.pk %}">Editar</a>
+                <a class="ti-btn" href="{% url 'usuarios:usuario_delete' u.pk %}">Eliminar</a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr class="ti-tr">
+            <td class="ti-td" colspan="6">
+              <div class="text-xs ti-subtitle">No hay usuarios para mostrar.</div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-3 text-xs ti-subtitle">
+    Tip: podés filtrar por username, nombre o email. Para roles más finos (permisos), después agregamos Grupos/Permisos.
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'usuarios/js/usuario_list.js' %}" defer></script>
+{% endblock %}

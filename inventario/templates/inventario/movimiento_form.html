@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Movimiento | Inventario{% endblock %}
+{% block page_title %}Movimiento{% endblock %}
+{% block page_subtitle %}Registrar ingreso, egreso, ajuste o transferencia{% endblock %}
+
+{% block content %}
+
+<div class="space-y-4">
+
+  {% include "inventario/_nav.html" with active_tab="movimientos" %}
+  
+
+  <section class="ti-card p-4">
+    <form method="post" class="space-y-4" novalidate>
+      {% csrf_token %}
+
+      {# Mantener redirect de vuelta al informe (si existe) #}
+      {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+      {% if form.errors %}
+        <div class="ti-card p-3">
+          <div class="text-sm font-semibold">No se pudo guardar el movimiento</div>
+          <div class="text-xs ti-subtitle mt-1">Revisá los campos marcados. Si es un egreso, verificá stock disponible en la ubicación.</div>
+        </div>
+      {% endif %}
+
+      {% if form.non_field_errors %}
+        <div class="ti-alert ti-alert-danger">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="ti-label" for="id_producto">Producto</label>
+          {{ form.producto }}
+          {% if form.producto.errors %}<div class="ti-field-error">{{ form.producto.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="ti-label" for="id_tipo">Tipo</label>
+          {{ form.tipo }}
+          {% if form.tipo.errors %}<div class="ti-field-error">{{ form.tipo.errors }}</div>{% endif %}
+          <div class="text-xs ti-subtitle mt-1">Transferencia mueve stock de un origen a un destino.</div>
+        </div>
+
+        <div>
+          <label class="ti-label" for="id_colectivo">Unidad (opcional)</label>
+          {{ form.colectivo }}
+          {% if form.colectivo.errors %}<div class="ti-field-error">{{ form.colectivo.errors }}</div>{% endif %}
+          <div class="text-xs ti-subtitle mt-1">
+            Si elegís una unidad, el informe 30 días se arma automáticamente con estos movimientos.
+          </div>
+        </div>
+
+        <div>
+          <label class="ti-label" for="id_ubicacion">Ubicación (origen)</label>
+          {{ form.ubicacion }}
+          {% if form.ubicacion.errors %}<div class="ti-field-error">{{ form.ubicacion.errors }}</div>{% endif %}
+        </div>
+
+        <div id="destino_wrap" class="hidden">
+          <label class="ti-label" for="id_ubicacion_destino">Ubicación destino</label>
+          {{ form.ubicacion_destino }}
+          {% if form.ubicacion_destino.errors %}<div class="ti-field-error">{{ form.ubicacion_destino.errors }}</div>{% endif %}
+          <div class="text-xs ti-subtitle mt-1">Solo para Transferencia.</div>
+        </div>
+
+        <div>
+          <label class="ti-label" for="id_cantidad">Cantidad</label>
+          {{ form.cantidad }}
+          {% if form.cantidad.errors %}<div class="ti-field-error">{{ form.cantidad.errors }}</div>{% endif %}
+          <div class="text-xs ti-subtitle mt-1">
+            Ingreso/Egreso/Transferencia: &gt; 0 · Ajuste: puede ser + o - (no 0).
+          </div>
+        </div>
+
+        <div>
+          <label class="ti-label" for="id_proveedor">Proveedor (opcional)</label>
+          {{ form.proveedor }}
+          {% if form.proveedor.errors %}<div class="ti-field-error">{{ form.proveedor.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="ti-label" for="id_referencia">Referencia</label>
+          {{ form.referencia }}
+          {% if form.referencia.errors %}<div class="ti-field-error">{{ form.referencia.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="ti-label" for="id_lote">Lote</label>
+          {{ form.lote }}
+          {% if form.lote.errors %}<div class="ti-field-error">{{ form.lote.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="ti-label" for="id_fecha_vencimiento">Vencimiento</label>
+          {{ form.fecha_vencimiento }}
+          {% if form.fecha_vencimiento.errors %}<div class="ti-field-error">{{ form.fecha_vencimiento.errors }}</div>{% endif %}
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="ti-label" for="id_observaciones">Observaciones</label>
+          {{ form.observaciones }}
+          {% if form.observaciones.errors %}<div class="ti-field-error">{{ form.observaciones.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2">
+        <a class="ti-btn" href="{% url 'inventario:movimiento_list' %}">Cancelar</a>
+        <button class="ti-btn-primary" type="submit">Guardar</button>
+      </div>
+
+    </form>
+  </section>
+  
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'inventario/js/movimientos.js' %}" defer></script>
+{% endblock %}

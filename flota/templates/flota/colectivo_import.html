@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Importar colectivos | Pañol ERP{% endblock %}
+{% block page_title %}Importar colectivos{% endblock %}
+{% block page_subtitle %}Carga masiva vía CSV (interno, dominio, año, marca, modelo).{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto space-y-4">
+
+  <div class="ti-card p-4">
+    <div class="text-sm font-semibold">Importación CSV</div>
+    <div class="text-xs ti-subtitle">Formato esperado: interno,dominio,anio_modelo,marca,modelo</div>
+  </div>
+
+  <div class="ti-card p-5 space-y-4">
+    <form method="post" enctype="multipart/form-data" class="space-y-3">
+      {% csrf_token %}
+      <input type="file" name="file" accept=".csv" class="ti-input" required>
+      <button class="ti-btn-primary w-full" type="submit">Importar</button>
+    </form>
+
+    <div class="ti-card p-3">
+      <div class="text-xs ti-subtitle font-mono">
+        interno,dominio,anio_modelo,marca,modelo
+      </div>
+    </div>
+
+    {% if preview_errors %}
+      <div class="ti-badge-high rounded-2xl px-4 py-3 text-sm">
+        Se detectaron observaciones durante la previsualización:
+      </div>
+      <pre class="text-xs whitespace-pre-wrap ti-card p-3">{{ preview_errors }}</pre>
+    {% endif %}
+  </div>
+
+  <div class="flex justify-end">
+    <a href="{% url 'flota:colectivo_list' %}" class="ti-btn">Volver</a>
+  </div>
+
+</div>
+{% endblock %}

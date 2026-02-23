@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+{% load inventario_extras %}
+
+{% block title %}Movimientos | Inventario{% endblock %}
+{% block page_title %}Movimientos{% endblock %}
+{% block page_subtitle %}Ingresos, egresos, ajustes y transferencias{% endblock %}
+
+{% block content %}
+
+<div class="space-y-4">
+
+  {% include "inventario/_nav.html" with active_tab="movimientos" %}
+
+  <!-- Acciones -->
+  <section class="ti-card p-4 flex items-center justify-between gap-2">
+    <div class="text-sm ti-subtitle">Historial de movimientos (últimos 30 días recomendado).</div>
+    <a class="ti-btn-primary" href="{% url 'inventario:movimiento_create' %}">+ Nuevo movimiento</a>
+  </section>
+
+  <!-- Tabla -->
+  <section class="ti-card p-0 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="ti-table">
+        <thead class="ti-thead">
+          <tr>
+            <th class="ti-th">Fecha</th>
+            <th class="ti-th">Tipo</th>
+            <th class="ti-th">Producto</th>
+            <th class="ti-th">Ubicación</th>
+            <th class="ti-th">Destino</th>
+            <th class="ti-th">Unidad</th>
+            <th class="ti-th text-right">Cantidad</th>
+            <th class="ti-th">Proveedor</th>
+            <th class="ti-th">Referencia</th>
+            <th class="ti-th text-right">Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for mov in movimientos %}
+            <tr class="ti-tr">
+              <td class="ti-td tabular-nums">{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+
+              <td class="ti-td">
+                {% if mov.tipo == 'INGRESO' %}
+                  <span class="ti-badge-ok">Ingreso</span>
+                {% elif mov.tipo == 'EGRESO' %}
+                  <span class="ti-badge-critical">Egreso</span>
+                {% elif mov.tipo == 'AJUSTE' %}
+                  <span class="ti-badge-info">Ajuste</span>
+                {% else %}
+                  <span class="ti-badge-high">Transferencia</span>
+                {% endif %}
+              </td>
+
+              <td class="ti-td">
+                <div class="font-semibold">{{ mov.producto.codigo }}</div>
+                <div class="text-xs ti-subtitle truncate">{{ mov.producto.nombre }}</div>
+              </td>
+
+              <td class="ti-td">{{ mov.ubicacion.codigo }}</td>
+
+              <td class="ti-td">
+                {% if mov.tipo == 'TRANSFERENCIA' and mov.ubicacion_destino %}
+                  {{ mov.ubicacion_destino.codigo }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+              <td class="ti-td">
+                {% if mov.colectivo %}
+                  <div class="font-semibold">INT-{{ mov.colectivo.interno }}</div>
+                  <div class="text-xs ti-subtitle">{{ mov.colectivo.dominio|default:"—" }}</div>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+              <td class="ti-td text-right tabular-nums">{{ mov.cantidad|qty:mov.producto.unidad_medida }}</td>
+
+              <td class="ti-td">
+                {% if mov.proveedor %}
+                  {{ mov.proveedor.nombre }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+              <td class="ti-td">{{ mov.referencia|default:"—" }}</td>
+
+              <td class="ti-td text-right">
+                <div class="flex justify-end gap-2">
+                  <a class="ti-btn" href="{% url 'inventario:movimiento_update' mov.pk %}">Editar</a>
+                  <a class="ti-btn" href="{% url 'inventario:movimiento_delete' mov.pk %}">Eliminar</a>
+                </div>
+              </td>
+            </tr>
+
+          {% empty %}
+            <tr class="ti-tr">
+              <td class="ti-td" colspan="10"><div class="text-xs ti-subtitle">Sin movimientos.</div></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div class="text-xs ti-subtitle">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</div>
+        <div class="flex gap-2">
+          {% if page_obj.has_previous %}
+            <a class="ti-btn" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a class="ti-btn" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+  </section>
+
+</div>
+
+{% endblock %}

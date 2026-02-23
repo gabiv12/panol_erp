@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Partes diarios | Flota{% endblock %}
+{% block page_title %}Partes diarios{% endblock %}
+{% block page_subtitle %}Incidencias, checklist, mantenimiento y auxilios.{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  <section class="ti-card p-4">
+    <form method="get" class="grid grid-cols-1 lg:grid-cols-6 gap-2 items-end">
+      <div class="lg:col-span-2">
+        <label class="text-xs ti-subtitle">Buscar</label>
+        <input class="ti-input w-full" name="q" value="{{ q }}" placeholder="Interno, dominio, texto…">
+      </div>
+
+      <div>
+        <label class="text-xs ti-subtitle">Tipo</label>
+        <select class="ti-input w-full" name="tipo">
+          <option value="">Todos</option>
+          {% for k,v in tipos %}
+            <option value="{{ k }}" {% if tipo == k %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs ti-subtitle">Estado</label>
+        <select class="ti-input w-full" name="estado">
+          <option value="">Todos</option>
+          {% for k,v in estados %}
+            <option value="{{ k }}" {% if estado == k %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs ti-subtitle">Días</label>
+        <input class="ti-input w-full" name="days" value="{{ days }}" type="number" min="1" max="365">
+      </div>
+
+      <div class="flex gap-2">
+        <button class="ti-btn-primary" type="submit">Filtrar</button>
+        <a class="ti-btn" href="{% url 'flota:parte_create' %}{% if colectivo_id %}?colectivo={{ colectivo_id }}{% endif %}">Nuevo</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="ti-card p-0 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="ti-table">
+        <thead class="ti-thead">
+          <tr>
+            <th class="ti-th">Fecha</th>
+            <th class="ti-th">Unidad</th>
+            <th class="ti-th">Tipo</th>
+            <th class="ti-th">Estado</th>
+            <th class="ti-th">Resumen</th>
+            <th class="ti-th text-right">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in items %}
+            <tr class="ti-tr">
+              <td class="ti-td text-xs tabular-nums">{{ it.fecha_evento|date:"d/m/Y H:i" }}</td>
+              <td class="ti-td">
+                <div class="font-semibold tabular-nums">{{ it.colectivo.interno }}</div>
+                <div class="text-xs ti-subtitle">{{ it.colectivo.dominio|default:"—" }}</div>
+              </td>
+              <td class="ti-td">{{ it.get_tipo_display }}</td>
+              <td class="ti-td">{{ it.get_estado_display }}</td>
+              <td class="ti-td text-xs">{{ it.resumen }}</td>
+              <td class="ti-td text-right">
+                <a class="ti-btn" href="{% url 'flota:parte_detail' it.id %}">Ver</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr class="ti-tr">
+              <td class="ti-td" colspan="6"><div class="text-xs ti-subtitle">Sin partes en el período.</div></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if is_paginated %}
+      <div class="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div class="text-xs ti-subtitle">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</div>
+        <div class="flex gap-2">
+          {% if page_obj.has_previous %}
+            <a class="ti-btn" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&tipo={{ tipo }}&estado={{ estado }}&days={{ days }}">Anterior</a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a class="ti-btn" href="?page={{ page_obj.next_page_number }}&q={{ q }}&tipo={{ tipo }}&estado={{ estado }}&days={{ days }}">Siguiente</a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

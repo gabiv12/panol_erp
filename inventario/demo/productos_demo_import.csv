@@ -1,0 +1,5 @@
+﻿codigo,nombre,descripcion,categoria,subcategoria,unidad_medida,proveedor,stock_minimo,maneja_vencimiento,is_active
+DEMO-REP-0100,Filtro de aire,Filtro aire motor,Repuestos,Filtros,u,Proveedor A,2,0,1
+DEMO-REP-0101,Disco de freno,Disco delantero,Repuestos,Frenos,u,Proveedor B,2,0,1
+DEMO-LUB-0100,Aceite 10W40 (1L),Lubricante,Lubricantes,Aceites,lt,Proveedor A,12,0,1
+DEMO-SEG-0100,Barbijo,Caja x50,Seguridad,EPP,caja,Proveedor B,1,0,1

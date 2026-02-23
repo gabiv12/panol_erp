@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Eliminar usuario | Pañol ERP{% endblock %}
+{% block page_title %}Administración{% endblock %}
+{% block page_subtitle %}Usuarios y roles (base).{% endblock %}
+
+{% block content %}
+
+<section class="ti-card p-4">
+  <div class="text-sm font-semibold">Eliminar usuario</div>
+  <div class="text-xs ti-subtitle">Esta acción no se puede deshacer.</div>
+
+  <div class="mt-4 ti-card p-4 border border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-200">
+    <div class="text-sm font-semibold">Confirmación</div>
+    <div class="text-xs mt-1">
+      Vas a eliminar el usuario <span class="font-semibold">{{ obj.username }}</span>.
+    </div>
+  </div>
+
+  <form method="post" class="mt-4 flex flex-wrap gap-2">
+    {% csrf_token %}
+    <button class="ti-btn" type="submit">Sí, eliminar</button>
+    <a class="ti-btn" href="{% url 'usuarios:usuario_list' %}">Cancelar</a>
+  </form>
+</section>
+
+{% endblock %}

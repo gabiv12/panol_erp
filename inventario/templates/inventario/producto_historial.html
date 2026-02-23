@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Historial de producto | Pañol ERP{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-6 space-y-4">
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-semibold">{{ object.codigo }} · {{ object.nombre }}</h1>
+      <p class="text-sm text-slate-600 dark:text-slate-300">Stock por ubicación, fotos y últimos movimientos.</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'inventario:producto_list' %}" class="ti-btn">Volver</a>
+      {% if perms.inventario.change_producto %}
+        <a href="{% url 'inventario:producto_update' object.id %}" class="ti-btn">Editar</a>
+      {% endif %}
+      <a href="{% url 'inventario:producto_etiquetas' %}?q={{ object.codigo|urlencode }}" class="ti-btn">Etiqueta</a>
+    </div>
+  </div>
+
+  {% include "inventario/_nav.html" %}
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+
+    <div class="xl:col-span-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm overflow-hidden">
+      <div class="border-b border-slate-200 dark:border-slate-800 px-4 py-3">
+        <div class="text-sm font-semibold">Fotos</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">Hasta 2 fotos por producto.</div>
+      </div>
+      <div class="px-4 py-3 space-y-3">
+        {% if imagenes %}
+          {% for img in imagenes %}
+            <div class="space-y-1">
+              <img src="{{ img.imagen.url }}" alt="Foto producto" class="w-full max-h-56 object-contain rounded-lg border border-slate-200 dark:border-slate-800">
+              {% if img.titulo %}
+                <div class="text-xs text-slate-500 dark:text-slate-400">{{ img.titulo }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-sm text-slate-600 dark:text-slate-300">Sin fotos cargadas.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="xl:col-span-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm overflow-hidden">
+      <div class="border-b border-slate-200 dark:border-slate-800 px-4 py-3">
+        <div class="text-sm font-semibold">Stock por ubicación</div>
+      </div>
+      <div class="max-h-[360px] overflow-auto px-4 py-3">
+        {% if stocks %}
+          <table class="w-full text-sm">
+            <thead class="text-left text-xs text-slate-500 dark:text-slate-400">
+              <tr>
+                <th class="py-2 pr-2">Ubicación</th>
+                <th class="py-2 text-right">Cantidad</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              {% for s in stocks %}
+                <tr>
+                  <td class="py-2 pr-2">{{ s.ubicacion.codigo }} · {{ s.ubicacion.nombre }}</td>
+                  <td class="py-2 text-right">{{ s.cantidad }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="text-sm text-slate-600 dark:text-slate-300">Sin stock registrado.</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="xl:col-span-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm overflow-hidden">
+      <div class="border-b border-slate-200 dark:border-slate-800 px-4 py-3">
+        <div class="text-sm font-semibold">Últimos movimientos</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">Hasta 200 recientes.</div>
+      </div>
+      <div class="max-h-[360px] overflow-auto px-4 py-3">
+        {% if movimientos %}
+          <table class="w-full text-sm">
+            <thead class="text-left text-xs text-slate-500 dark:text-slate-400">
+              <tr>
+                <th class="py-2 pr-2">Fecha</th>
+                <th class="py-2 pr-2">Tipo</th>
+                <th class="py-2 pr-2">Ubicación</th>
+                <th class="py-2 text-right">Cantidad</th>
+                <th class="py-2 pr-2">Referencia</th>
+                <th class="py-2 pr-2">Usuario</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+              {% for m in movimientos %}
+                <tr>
+                  <td class="py-2 pr-2">{{ m.fecha|date:"d/m/Y H:i" }}</td>
+                  <td class="py-2 pr-2">{{ m.get_tipo_display }}</td>
+                  <td class="py-2 pr-2">{{ m.ubicacion.codigo }}</td>
+                  <td class="py-2 text-right">{{ m.cantidad }}</td>
+                  <td class="py-2 pr-2">{{ m.referencia|default:"-" }}</td>
+                  <td class="py-2 pr-2">{{ m.usuario.username|default:"-" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="text-sm text-slate-600 dark:text-slate-300">Sin movimientos.</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

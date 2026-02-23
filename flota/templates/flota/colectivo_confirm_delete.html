@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar colectivo | Pañol ERP{% endblock %}
+{% block page_title %}Eliminar colectivo{% endblock %}
+{% block page_subtitle %}Confirmación de borrado.{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto space-y-4">
+
+  <div class="ti-card p-4">
+    <div class="text-sm font-semibold">Confirmación</div>
+    <div class="text-xs ti-subtitle">Esta acción no se puede deshacer.</div>
+  </div>
+
+  <div class="ti-card p-5 space-y-2">
+    <p class="text-sm">
+      ¿Eliminar el colectivo <span class="font-semibold">Interno {{ object.interno }}</span>?
+    </p>
+    <p class="text-xs ti-subtitle">
+      Si lo necesitás luego, vas a tener que crearlo nuevamente o re-importarlo.
+    </p>
+  </div>
+
+  <form method="post" class="flex items-center justify-end gap-2">
+    {% csrf_token %}
+    <a href="{% url 'flota:colectivo_list' %}" class="ti-btn">Cancelar</a>
+    <button class="ti-btn-primary" type="submit">Eliminar</button>
+  </form>
+</div>
+{% endblock %}

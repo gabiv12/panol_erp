@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar movimiento | Inventario{% endblock %}
+{% block page_title %}Inventario{% endblock %}
+{% block page_subtitle %}Eliminar movimiento{% endblock %}
+
+{% block content %}
+<div class="space-y-4 max-w-3xl">
+
+  {% include "inventario/_nav.html" %}
+
+  <section class="ti-card p-4">
+    <p class="text-sm">
+      ¿Eliminar el movimiento de <span class="font-semibold">{{ object.producto }}</span>
+      por <span class="font-semibold">{{ object.cantidad }}</span>?
+    </p>
+    <p class="text-xs ti-subtitle mt-1">
+      Fecha: {{ object.fecha|date:"Y-m-d H:i" }} · Tipo: {{ object.get_tipo_display }} · Ubicación: {{ object.ubicacion }}
+    </p>
+
+    <form method="post" class="mt-4 flex gap-2">
+      {% csrf_token %}
+      <a href="{% url 'inventario:movimiento_list' %}" class="ti-btn">Cancelar</a>
+      <button type="submit" class="ti-btn ti-btn-danger">Eliminar</button>
+    </form>
+  </section>
+
+</div>
+{% endblock %}

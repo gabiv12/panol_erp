@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Flota | Colectivos{% endblock %}
+{% block page_title %}Flota{% endblock %}
+{% block page_subtitle %}Unidades cargadas y su estado operativo.{% endblock %}
+
+{% block content %}
+
+<section class="ti-card p-4">
+  <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div class="min-w-0">
+      <div class="text-sm font-semibold">Colectivos</div>
+      <div class="text-xs ti-subtitle">
+        {% if paginator %}
+          Total: <span class="font-semibold tabular-nums">{{ paginator.count }}</span>
+          · Página <span class="font-semibold tabular-nums">{{ page_obj.number }}</span>/<span class="font-semibold tabular-nums">{{ page_obj.paginator.num_pages }}</span>
+        {% else %}
+          Listado de unidades.
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <a class="ti-btn" href="{% url 'flota:colectivo_import' %}">Importar</a>
+      <a class="ti-btn" href="{% url 'flota:colectivo_export' %}">Exportar</a>
+      <a class="ti-btn-primary" href="{% url 'flota:colectivo_create' %}">Nuevo</a>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2">
+      <div class="relative">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+            <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <input name="q"
+               value="{{ request.GET.q|default:'' }}"
+               placeholder="Buscar por interno, dominio, marca o modelo…"
+               class="ti-input pl-10 w-full" />
+      </div>
+
+      <button class="ti-btn" type="submit">Buscar</button>
+    </form>
+  </div>
+</section>
+
+<section class="mt-4 ti-card p-0 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="ti-table" id="colectivosTable">
+      <thead class="ti-thead">
+        <tr class="ti-tr">
+          <th class="ti-th">Interno</th>
+          <th class="ti-th">Dominio</th>
+          <th class="ti-th">Marca</th>
+          <th class="ti-th">Modelo</th>
+          <th class="ti-th">Estado</th>
+          <th class="ti-th">VTV</th>
+          <th class="ti-th">Matafuego</th>
+          <th class="ti-th text-right">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for c in object_list %}
+          <tr class="ti-tr">
+            <td class="ti-td font-semibold tabular-nums">{{ c.interno }}</td>
+            <td class="ti-td">{{ c.dominio|default:"—" }}</td>
+            <td class="ti-td">{{ c.marca|default:"—" }}</td>
+            <td class="ti-td">{{ c.modelo|default:"—" }}</td>
+
+            <td class="ti-td">
+              {% if c.estado == "ACTIVO" %}
+                <span class="ti-badge-ok">Activa</span>
+              {% elif c.estado == "TALLER" %}
+                <span class="ti-badge-high">Taller</span>
+              {% elif c.estado == "BAJA" %}
+                <span class="ti-badge-critical">Baja</span>
+              {% else %}
+                <span class="ti-badge-muted">{{ c.estado|default:"—" }}</span>
+              {% endif %}
+            </td>
+
+            <td class="ti-td">
+              {% if c.revision_tecnica_vto %}
+                {{ c.revision_tecnica_vto|date:"d/m/Y" }}
+              {% else %}
+                <span class="ti-badge-info">Sin fecha</span>
+              {% endif %}
+            </td>
+
+            <td class="ti-td">
+              {% if c.matafuego_vto %}
+                {{ c.matafuego_vto|date:"d/m/Y" }}
+              {% else %}
+                <span class="ti-badge-info">Sin fecha</span>
+              {% endif %}
+            </td>
+
+            <td class="ti-td text-right">
+              <div class="flex justify-end gap-2">
+                <a class="ti-btn" href="{% url 'flota:colectivo_report' c.pk %}?days=30">Informe 30 días</a>
+                <a class="ti-btn" href="{% url 'flota:colectivo_update' c.pk %}">Editar</a>
+                <a class="ti-btn" href="{% url 'flota:colectivo_delete' c.pk %}">Eliminar</a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr class="ti-tr">
+            <td class="ti-td" colspan="8">
+              <div class="p-6 text-center">
+                <div class="text-sm font-semibold">No hay colectivos para mostrar</div>
+                <div class="text-xs ti-subtitle mt-1">Probá limpiar el buscador o importá unidades.</div>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if is_paginated %}
+    <div class="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+      <div class="text-xs ti-subtitle">
+        Página <span class="font-semibold tabular-nums">{{ page_obj.number }}</span> de <span class="font-semibold tabular-nums">{{ page_obj.paginator.num_pages }}</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        {% if page_obj.has_previous %}
+          <a class="ti-btn" href="?q={{ request.GET.q|urlencode }}&page={{ page_obj.previous_page_number }}">Anterior</a>
+        {% else %}
+          <span class="ti-btn opacity-50 pointer-events-none">Anterior</span>
+        {% endif %}
+
+        {% if page_obj.has_next %}
+          <a class="ti-btn" href="?q={{ request.GET.q|urlencode }}&page={{ page_obj.next_page_number }}">Siguiente</a>
+        {% else %}
+          <span class="ti-btn opacity-50 pointer-events-none">Siguiente</span>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'flota/js/colectivos.js' %}" defer></script>
+{% endblock %}

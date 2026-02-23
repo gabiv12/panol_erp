@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Editar producto{% else %}Nuevo producto{% endif %} | Pañol ERP{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-6 space-y-4">
+  <div>
+    <h1 class="text-2xl font-semibold">{% if object %}Editar producto{% else %}Nuevo producto{% endif %}</h1>
+    <p class="text-sm text-slate-600 dark:text-slate-300">Datos de catálogo, stock mínimo y fotos (opcional).</p>
+  </div>
+
+  {% include "inventario/_nav.html" %}
+
+  <form method="post"
+        enctype="multipart/form-data"
+        class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm p-4 space-y-4">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="ti-alert-error">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="ti-label" for="{{ form.codigo.id_for_label }}">Código (interno)</label>
+        {{ form.codigo }}
+        {% for error in form.codigo.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div>
+        <label class="ti-label" for="{{ form.nombre.id_for_label }}">Nombre</label>
+        {{ form.nombre }}
+        {% for error in form.nombre.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="ti-label" for="{{ form.descripcion.id_for_label }}">Descripción</label>
+        {{ form.descripcion }}
+        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Recomendado: TIPO / CRITICO / COMPAT / BARCODE (si existe).
+        </div>
+        {% for error in form.descripcion.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div>
+        <label class="ti-label" for="{{ form.categoria.id_for_label }}">Categoría</label>
+        {{ form.categoria }}
+        {% for error in form.categoria.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div>
+        <label class="ti-label" for="{{ form.subcategoria.id_for_label }}">Subcategoría</label>
+        {{ form.subcategoria }}
+        {% for error in form.subcategoria.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div>
+        <label class="ti-label" for="{{ form.unidad_medida.id_for_label }}">Unidad</label>
+        {{ form.unidad_medida }}
+        {% for error in form.unidad_medida.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div>
+        <label class="ti-label" for="{{ form.proveedor.id_for_label }}">Proveedor</label>
+        {{ form.proveedor }}
+        {% for error in form.proveedor.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div>
+        <label class="ti-label" for="{{ form.stock_minimo.id_for_label }}">Stock mínimo</label>
+        {{ form.stock_minimo }}
+        {% for error in form.stock_minimo.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="flex items-center gap-2">
+        {{ form.maneja_vencimiento }}
+        <label class="ti-label m-0" for="{{ form.maneja_vencimiento.id_for_label }}">Maneja vencimiento</label>
+        {% for error in form.maneja_vencimiento.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="flex items-center gap-2">
+        {{ form.is_active }}
+        <label class="ti-label m-0" for="{{ form.is_active.id_for_label }}">Activo</label>
+        {% for error in form.is_active.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-3">
+      <div class="text-sm font-semibold">Fotos del producto (opcional)</div>
+      <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+        Máximo 2 fotos. Formatos: JPG/PNG/WEBP. Tamaño recomendado: hasta 4 MB.
+      </div>
+
+      {{ imagenes_formset.management_form }}
+      {% if imagenes_formset.non_form_errors %}
+        <div class="ti-alert-error mt-2">{{ imagenes_formset.non_form_errors }}</div>
+      {% endif %}
+
+      <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+        {% for f in imagenes_formset.forms %}
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-2">
+            {% if f.instance.pk and f.instance.imagen %}
+              <img src="{{ f.instance.imagen.url }}" alt="Foto producto" class="w-full max-h-48 object-contain rounded-lg border border-slate-200 dark:border-slate-800">
+            {% endif %}
+
+            <div>
+              <label class="ti-label">Imagen</label>
+              {{ f.imagen }}
+              {% for error in f.imagen.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div>
+              <label class="ti-label">Título</label>
+              {{ f.titulo }}
+              {% for error in f.titulo.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div>
+              <label class="ti-label">Orden</label>
+              {{ f.orden }}
+              {% for error in f.orden.errors %}<div class="ti-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            {% if f.instance.pk %}
+              <div class="flex items-center gap-2">
+                {{ f.DELETE }}
+                <label class="ti-label m-0">Eliminar esta foto</label>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="flex flex-col sm:flex-row sm:justify-end gap-2 pt-2">
+      <a href="{% url 'inventario:producto_list' %}" class="ti-btn">Cancelar</a>
+      <button type="submit" class="ti-btn-primary">Guardar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

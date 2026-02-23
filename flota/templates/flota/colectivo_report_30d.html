@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Informe de unidad | Pañol ERP{% endblock %}
+{% block page_title %}Informe de unidad{% endblock %}
+{% block page_subtitle %}Resumen de los últimos {{ days }} días.{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  <section class="ti-card p-4 flex items-center justify-between gap-3">
+    <div class="min-w-0">
+      <div class="text-sm font-semibold">Interno {{ c.interno }} · {{ c.dominio }}</div>
+      <div class="text-xs ti-subtitle">
+        Estado: {{ c.get_estado_display }} · Servicio: {{ c.get_tipo_servicio_display }} · Período: desde {{ desde|date:"d/m/Y" }}
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <a class="ti-btn" href="{% url 'flota:colectivo_list' %}">Volver</a>
+      <a class="ti-btn" href="{% url 'flota:colectivo_update' c.pk %}">Editar unidad</a>
+      <button class="ti-btn" onclick="window.print()">Imprimir</button>
+      <a class="ti-btn" href="{% url 'flota:colectivo_parte_list' c.id %}">Ver partes</a>
+
+<a class="ti-btn-primary"
+   href="{% url 'flota:parte_create' %}?colectivo={{ c.id }}&next={{ request.get_full_path|urlencode }}">
+  Nuevo parte
+</a>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+    <div class="ti-card p-4">
+      <div class="text-sm font-semibold">VTV</div>
+      <div class="text-xs ti-subtitle">Estado del vencimiento</div>
+      <div class="mt-3">
+        {% if vtv_badge == "critical" %}<span class="ti-badge-critical">{{ vtv_estado }}</span>
+        {% elif vtv_badge == "high" %}<span class="ti-badge-high">{{ vtv_estado }}</span>
+        {% elif vtv_badge == "ok" %}<span class="ti-badge-ok">{{ vtv_estado }}</span>
+        {% else %}<span class="ti-badge-info">{{ vtv_estado }}</span>{% endif %}
+      </div>
+      <div class="mt-3 text-sm">
+        <div>Fecha: {% if c.revision_tecnica_vto %}<span class="font-semibold">{{ c.revision_tecnica_vto|date:"d/m/Y" }}</span>{% else %}—{% endif %}</div>
+        <div>Días: {% if vtv_dias is not None %}<span class="font-semibold">{{ vtv_dias }}</span>{% else %}—{% endif %}</div>
+      </div>
+    </div>
+
+    <div class="ti-card p-4">
+      <div class="text-sm font-semibold">Matafuego</div>
+      <div class="text-xs ti-subtitle">Vencimiento y último control</div>
+      <div class="mt-3">
+        {% if mf_badge == "critical" %}<span class="ti-badge-critical">{{ mf_estado }}</span>
+        {% elif mf_badge == "high" %}<span class="ti-badge-high">{{ mf_estado }}</span>
+        {% elif mf_badge == "ok" %}<span class="ti-badge-ok">{{ mf_estado }}</span>
+        {% else %}<span class="ti-badge-info">{{ mf_estado }}</span>{% endif %}
+      </div>
+      <div class="mt-3 text-sm">
+        <div>Vto: {% if c.matafuego_vto %}<span class="font-semibold">{{ c.matafuego_vto|date:"d/m/Y" }}</span>{% else %}—{% endif %}</div>
+        <div>Últ. control: {% if c.matafuego_ult_control %}<span class="font-semibold">{{ c.matafuego_ult_control|date:"d/m/Y" }}</span>{% else %}—{% endif %}</div>
+        <div>Días: {% if mf_dias is not None %}<span class="font-semibold">{{ mf_dias }}</span>{% else %}—{% endif %}</div>
+      </div>
+    </div>
+
+    <div class="ti-card p-4">
+      <div class="text-sm font-semibold">Limpieza</div>
+      <div class="text-xs ti-subtitle">Registro simple (hasta tener módulo de checklist)</div>
+      <div class="mt-3">
+        {% if limp_badge == "critical" %}<span class="ti-badge-critical">{{ limp_estado }}</span>
+        {% elif limp_badge == "high" %}<span class="ti-badge-high">{{ limp_estado }}</span>
+        {% elif limp_badge == "ok" %}<span class="ti-badge-ok">{{ limp_estado }}</span>
+        {% else %}<span class="ti-badge-info">{{ limp_estado }}</span>{% endif %}
+      </div>
+      <div class="mt-3 text-sm">
+        <div>Fecha: {% if limp_fecha %}<span class="font-semibold">{{ limp_fecha|date:"d/m/Y" }}</span>{% else %}—{% endif %}</div>
+        <div>Por: {% if limp_por %}<span class="font-semibold">{{ limp_por }}</span>{% else %}—{% endif %}</div>
+        <div class="mt-2 text-xs ti-subtitle">{% if limp_obs %}{{ limp_obs }}{% else %}—{% endif %}</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ti-card p-4">
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <div class="text-sm font-semibold">Mantenimiento por kilómetro</div>
+        <div class="text-xs ti-subtitle">Se calcula con odómetro actual + último cambio + intervalo</div>
+      </div>
+      <div class="text-xs ti-subtitle">
+        Odómetro: {% if odometro_km %}<span class="font-semibold tabular-nums">{{ odometro_km }}</span>{% else %}—{% endif %}
+        {% if odometro_fecha %}· ({{ odometro_fecha|date:"d/m/Y" }}){% endif %}
+      </div>
+    </div>
+
+    <div class="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div class="ti-card p-4">
+        <div class="flex items-center justify-between">
+          <div class="text-sm font-semibold">Aceite</div>
+          {% if aceite.badge == "critical" %}<span class="ti-badge-critical">{{ aceite.estado }}</span>
+          {% elif aceite.badge == "high" %}<span class="ti-badge-high">{{ aceite.estado }}</span>
+          {% elif aceite.badge == "ok" %}<span class="ti-badge-ok">{{ aceite.estado }}</span>
+          {% else %}<span class="ti-badge-info">{{ aceite.estado }}</span>{% endif %}
+        </div>
+        <div class="mt-2 text-sm">
+          <div>Último km: <span class="font-semibold tabular-nums">{{ aceite.ultimo_km|default:"—" }}</span></div>
+          <div>Intervalo: <span class="font-semibold tabular-nums">{{ aceite.intervalo_km|default:"—" }}</span></div>
+          <div>Próximo: <span class="font-semibold tabular-nums">{{ aceite.proximo_km|default:"—" }}</span></div>
+          <div>Faltan: <span class="font-semibold tabular-nums">{{ aceite.faltan_km|default:"—" }}</span></div>
+          <div>Fecha último: {% if aceite_fecha %}<span class="font-semibold">{{ aceite_fecha|date:"d/m/Y" }}</span>{% else %}—{% endif %}</div>
+          <div class="mt-2 text-xs ti-subtitle">{% if aceite_obs %}{{ aceite_obs }}{% else %}—{% endif %}</div>
+        </div>
+      </div>
+
+      <div class="ti-card p-4">
+        <div class="flex items-center justify-between">
+          <div class="text-sm font-semibold">Filtros</div>
+          {% if filtros.badge == "critical" %}<span class="ti-badge-critical">{{ filtros.estado }}</span>
+          {% elif filtros.badge == "high" %}<span class="ti-badge-high">{{ filtros.estado }}</span>
+          {% elif filtros.badge == "ok" %}<span class="ti-badge-ok">{{ filtros.estado }}</span>
+          {% else %}<span class="ti-badge-info">{{ filtros.estado }}</span>{% endif %}
+        </div>
+        <div class="mt-2 text-sm">
+          <div>Último km: <span class="font-semibold tabular-nums">{{ filtros.ultimo_km|default:"—" }}</span></div>
+          <div>Intervalo: <span class="font-semibold tabular-nums">{{ filtros.intervalo_km|default:"—" }}</span></div>
+          <div>Próximo: <span class="font-semibold tabular-nums">{{ filtros.proximo_km|default:"—" }}</span></div>
+          <div>Faltan: <span class="font-semibold tabular-nums">{{ filtros.faltan_km|default:"—" }}</span></div>
+          <div>Fecha último: {% if filtros_fecha %}<span class="font-semibold">{{ filtros_fecha|date:"d/m/Y" }}</span>{% else %}—{% endif %}</div>
+          <div class="mt-2 text-xs ti-subtitle">{% if filtros_obs %}{{ filtros_obs }}{% else %}—{% endif %}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 2xl:grid-cols-2 gap-3">
+    <div class="ti-card p-4">
+      <div class="text-sm font-semibold">Actividad registrada</div>
+      <div class="text-xs ti-subtitle">Movimientos de inventario asociados</div>
+      <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+        <div class="ti-card p-3">
+          <div class="text-xs ti-subtitle">Movimientos</div>
+          <div class="font-semibold tabular-nums">{{ total_mov }}</div>
+        </div>
+        <div class="ti-card p-3">
+          <div class="text-xs ti-subtitle">Días con actividad</div>
+          <div class="font-semibold tabular-nums">{{ dias_con_actividad }}</div>
+        </div>
+      </div>
+      <div class="mt-3 text-xs ti-subtitle">
+        Si un movimiento no tiene unidad asociada, el sistema intenta detectarlo por referencia/observaciones.
+      </div>
+    </div>
+
+    <div class="ti-card p-4">
+      <div class="text-sm font-semibold">Resumen por tipo</div>
+      <div class="text-xs ti-subtitle">Cantidad de movimientos y total de cantidades</div>
+      <div class="mt-3 overflow-x-auto">
+        <table class="ti-table">
+          <thead class="ti-thead">
+            <tr>
+              <th class="ti-th">Tipo</th>
+              <th class="ti-th text-right">Mov.</th>
+              <th class="ti-th text-right">Cantidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in stats_by_tipo %}
+              <tr class="ti-tr">
+                <td class="ti-td">{{ row.tipo }}</td>
+                <td class="ti-td text-right tabular-nums">{{ row.cnt }}</td>
+                <td class="ti-td text-right tabular-nums">{{ row.qty }}</td>
+              </tr>
+            {% empty %}
+              <tr class="ti-tr">
+                <td class="ti-td" colspan="3"><div class="text-xs ti-subtitle">Sin datos.</div></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="ti-card p-4">
+    <div class="text-sm font-semibold">Movimientos asociados</div>
+    <div class="text-xs ti-subtitle">Últimos {{ days }} días</div>
+    <div class="mt-3 overflow-x-auto">
+      <table class="ti-table">
+        <thead class="ti-thead">
+          <tr>
+            <th class="ti-th">Fecha</th>
+            <th class="ti-th">Tipo</th>
+            <th class="ti-th">Producto</th>
+            <th class="ti-th">Origen</th>
+            <th class="ti-th">Destino</th>
+            <th class="ti-th text-right">Cantidad</th>
+            <th class="ti-th">Referencia</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in mov_qs %}
+            <tr class="ti-tr">
+              <td class="ti-td text-xs tabular-nums">{{ m.fecha|date:"d/m H:i" }}</td>
+              <td class="ti-td">{{ m.tipo }}</td>
+              <td class="ti-td">{{ m.producto.codigo }} - {{ m.producto.nombre }}</td>
+              <td class="ti-td tabular-nums">{{ m.ubicacion.codigo }}</td>
+              <td class="ti-td tabular-nums">{% if m.ubicacion_destino %}{{ m.ubicacion_destino.codigo }}{% else %}—{% endif %}</td>
+              <td class="ti-td text-right tabular-nums">{{ m.cantidad }}</td>
+              <td class="ti-td">{{ m.referencia|default:"—" }}</td>
+            </tr>
+          {% empty %}
+            <tr class="ti-tr">
+              <td class="ti-td" colspan="7"><div class="text-xs ti-subtitle">No se encontraron movimientos asociados.</div></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="ti-card p-4">
+    <div class="text-sm font-semibold">Checklist chofer y partes diarios</div>
+    <div class="text-xs ti-subtitle">
+      Queda anotado: checklist de chofer + fotos + reportes y también “limpiacoche limpió la unidad”.
+      Hoy dejamos limpieza en la unidad (simple). Checklist completo y fotos van a Partes Diarios.
+    </div>
+  </section>
+
+</div>
+{% endblock %}

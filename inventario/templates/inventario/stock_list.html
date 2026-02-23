@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load inventario_extras %}
+{% block title %}Stock | Pañol ERP{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-6 space-y-4">
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-semibold">Stock actual</h1>
+      <p class="text-sm text-slate-600 dark:text-slate-300">Existencias por producto y ubicación.</p>
+    </div>
+
+    <div class="flex gap-2">
+      <a href="{% url 'inventario:stock_list' %}?low=1" class="ti-btn">Solo bajo mínimo</a>
+      <a href="{% url 'inventario:stock_list' %}" class="ti-btn">Todos</a>
+    </div>
+  </div>
+
+  {% include "inventario/_nav.html" with active_tab="stock" %}
+
+  <form method="get" class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm p-4">
+    <input type="hidden" name="low" value="{% if low %}1{% endif %}">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div class="md:col-span-2">
+        <label class="ti-label" for="id_q">Buscar</label>
+        <input type="text" name="q" id="id_q" value="{{ request.GET.q }}" placeholder="Producto o ubicación"
+               class="ti-input" />
+      </div>
+
+      <div>
+        <label class="ti-label">Ubicación</label>
+        {{ filterset.form.ubicacion }}
+      </div>
+
+      <div class="flex items-end gap-2">
+        <button class="ti-btn-primary" type="submit">Filtrar</button>
+        <a class="ti-btn" href="{% url 'inventario:stock_list' %}{% if low %}?low=1{% endif %}">Limpiar</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300">
+        <tr>
+          <th class="text-left px-4 py-3">Producto</th>
+          <th class="text-left px-4 py-3">Ubicación</th>
+          <th class="text-right px-4 py-3">Cantidad</th>
+          <th class="text-right px-4 py-3">Mínimo</th>
+          <th class="text-left px-4 py-3">Último movimiento</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+        {% for s in object_list %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/30">
+          <td class="px-4 py-3">
+            <div class="font-medium">{{ s.producto.codigo }}</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">{{ s.producto.nombre }}</div>
+          </td>
+          <td class="px-4 py-3">{{ s.ubicacion.codigo }} · {{ s.ubicacion.nombre }}</td>
+          <td class="px-4 py-3 text-right">{{ s.cantidad|qty:s.producto.unidad_medida }}</td>
+          <td class="px-4 py-3 text-right">{{ s.producto.stock_minimo }}</td>
+          <td class="px-4 py-3">
+            {% if s.last_movement_at %}
+              {{ s.last_movement_at|date:"d/m/Y H:i" }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td class="px-4 py-6 text-slate-500 dark:text-slate-400" colspan="5">No hay stock registrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

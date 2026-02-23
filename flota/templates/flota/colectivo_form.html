@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Editar colectivo{% else %}Nuevo colectivo{% endif %} | Pañol ERP{% endblock %}
+{% block page_title %}{% if object %}Editar colectivo{% else %}Nuevo colectivo{% endif %}{% endblock %}
+{% block page_subtitle %}Datos oficiales de la unidad.{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  <div class="ti-card p-4 flex items-center justify-between gap-3">
+    <div class="min-w-0">
+      <div class="text-sm font-semibold">{% if object %}Editar colectivo{% else %}Nuevo colectivo{% endif %}</div>
+      <div class="text-xs ti-subtitle">Completá los campos y guardá. Los obligatorios dependen del modelo.</div>
+    </div>
+    <a href="{% url 'flota:colectivo_list' %}" class="ti-btn">Volver</a>
+  </div>
+
+  <form method="post" class="ti-card p-6">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="mb-4 ti-badge-critical rounded-2xl px-4 py-3 text-sm">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {% for field in form %}
+        <div class="{% if field.name == 'observaciones' %}md:col-span-2{% endif %}">
+          <label class="ti-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+
+          <div class="mt-1">
+            {{ field }}
+          </div>
+
+          {% if field.help_text %}
+            <div class="ti-help">{{ field.help_text }}</div>
+          {% endif %}
+
+          {% if field.errors %}
+            <div class="ti-error">{{ field.errors|striptags }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-6 flex items-center justify-end gap-2">
+      <a href="{% url 'flota:colectivo_list' %}" class="ti-btn">Cancelar</a>
+      <button type="submit" class="ti-btn-primary">Guardar</button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

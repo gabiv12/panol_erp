@@ -1,0 +1,120 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
+}
+
+@layer components {
+  /* Tipografía y textos */
+  .ti-title { @apply text-slate-900 dark:text-slate-100; }
+  .ti-subtitle { @apply text-slate-600 dark:text-slate-300; }
+  .ti-muted { @apply text-slate-600 dark:text-slate-300; }
+
+  /* Contenedores */
+  .ti-card {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-sm
+           dark:border-slate-800 dark:bg-slate-950;
+  }
+
+  /* Labels / help / errores */
+  .ti-label { @apply block text-sm font-semibold text-slate-900 dark:text-slate-100; }
+  .ti-help  { @apply mt-1 text-xs text-slate-600 dark:text-slate-300; }
+  .ti-error { @apply mt-1 text-sm font-semibold text-red-700 dark:text-red-300; }
+
+  /* Inputs comunes: SIEMPRE legibles */
+  .ti-input {
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2
+           text-slate-900 placeholder:text-slate-500
+           focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400
+           dark:border-slate-700 dark:bg-slate-900
+           dark:text-slate-100 dark:placeholder:text-slate-400
+           dark:focus:ring-slate-100/15 dark:focus:border-slate-500;
+  }
+
+  .ti-select {
+    @apply ti-input appearance-none pr-10;
+  }
+
+  .ti-textarea {
+    @apply ti-input min-h-[96px];
+  }
+
+  /* Checkboxes */
+  .ti-checkbox {
+    @apply h-5 w-5 rounded border-slate-300 text-slate-900
+           focus:ring-2 focus:ring-slate-900/20
+           dark:border-slate-700 dark:text-slate-100 dark:focus:ring-slate-100/15;
+  }
+
+  /* Botones */
+  .ti-btn {
+    @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold
+           border border-slate-300 bg-white text-slate-900
+           hover:bg-slate-50
+           dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100
+           dark:hover:bg-slate-800;
+  }
+
+  .ti-btn-primary {
+    @apply ti-btn border-transparent bg-slate-900 text-white hover:bg-slate-800
+           dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white;
+  }
+
+  .ti-btn-danger {
+    @apply ti-btn border-red-300 text-red-700 hover:bg-red-50
+           dark:border-red-700 dark:text-red-200 dark:hover:bg-red-950/40;
+  }
+}
+@layer components {
+  .ti-field {
+    @apply w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2
+           text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500
+           focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600;
+  }
+}
+
+
+@layer components {
+  /* Badges (severidad / estados) */
+  .ti-badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold
+           border border-slate-200 bg-white text-slate-700
+           dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200;
+  }
+
+  .ti-badge-muted    { @apply ti-badge bg-slate-50 text-slate-700 dark:bg-slate-900/40 dark:text-slate-200; }
+  .ti-badge-ok       { @apply ti-badge border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200; }
+  .ti-badge-info     { @apply ti-badge border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-900/40 dark:bg-sky-950/30 dark:text-sky-200; }
+  .ti-badge-high     { @apply ti-badge border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200; }
+  .ti-badge-critical { @apply ti-badge border-red-200 bg-red-50 text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200; }
+
+  /* Sidebar nav */
+  .ti-navlink {
+    @apply flex items-start gap-3 rounded-2xl px-3 py-2 text-sm
+           text-slate-800 hover:bg-slate-100
+           dark:text-slate-100 dark:hover:bg-slate-900/40;
+  }
+  .ti-navlink-active {
+    @apply bg-slate-100 text-slate-900
+           dark:bg-slate-900/60 dark:text-white;
+  }
+  .ti-navlink-disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
+  .ti-navicon { @apply mt-0.5 text-slate-500 dark:text-slate-400; }
+  .ti-navtitle { @apply block font-semibold leading-tight truncate; }
+  .ti-navsub { @apply block text-xs ti-subtitle leading-tight truncate; }
+
+  /* Tablas (look & feel consistente) */
+  .ti-table { @apply w-full text-sm; }
+  .ti-thead { @apply text-left text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40; }
+  .ti-th    { @apply px-4 py-3 font-semibold; }
+  .ti-td    { @apply px-4 py-3; }
+  .ti-tr    { @apply border-t border-slate-200 dark:border-slate-800 hover:bg-slate-50/60 dark:hover:bg-slate-900/30; }
+
+  /* Separadores / divisores suaves */
+  .ti-divider { @apply border-t border-slate-200 dark:border-slate-800; }
+}

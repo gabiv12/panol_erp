@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Parte {{ p.id }} | Flota{% endblock %}
+{% block page_title %}Parte diario #{{ p.id }}{% endblock %}
+{% block page_subtitle %}Unidad {{ p.colectivo.interno }} - {{ p.get_tipo_display }} - {{ p.get_estado_display }}{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  <section class="ti-card p-4">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-3 text-sm">
+      <div>
+        <div class="text-xs ti-subtitle">Fecha</div>
+        <div class="font-semibold tabular-nums">{{ p.fecha_evento|date:"d/m/Y H:i" }}</div>
+      </div>
+      <div>
+        <div class="text-xs ti-subtitle">Unidad</div>
+        <div class="font-semibold tabular-nums">{{ p.colectivo.interno }}</div>
+        <div class="text-xs ti-subtitle">{{ p.colectivo.dominio|default:"—" }}</div>
+      </div>
+      <div>
+        <div class="text-xs ti-subtitle">Severidad</div>
+        <div class="font-semibold">{{ p.get_severidad_display }}</div>
+      </div>
+      <div>
+        <div class="text-xs ti-subtitle">Odómetro</div>
+        <div class="font-semibold tabular-nums">{% if p.odometro_km %}{{ p.odometro_km }} km{% else %}—{% endif %}</div>
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <div class="text-xs ti-subtitle">Descripción</div>
+      <div class="mt-1 text-sm whitespace-pre-line">{{ p.descripcion }}</div>
+    </div>
+
+    {% if p.observaciones %}
+      <div class="mt-3">
+        <div class="text-xs ti-subtitle">Observaciones</div>
+        <div class="mt-1 text-sm whitespace-pre-line">{{ p.observaciones }}</div>
+      </div>
+    {% endif %}
+
+    {% if p.tipo == "MANTENIMIENTO" %}
+      <div class="mt-4 ti-card p-3">
+        <div class="text-sm font-semibold">Detalle de mantenimiento</div>
+        <div class="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-2 text-sm">
+          <div>
+            <span class="text-xs ti-subtitle">Acción</span>
+            <div class="font-semibold">{{ p.get_accion_mantenimiento_display }}</div>
+          </div>
+          <div>
+            <span class="text-xs ti-subtitle">Km</span>
+            <div class="font-semibold tabular-nums">{% if p.km_mantenimiento %}{{ p.km_mantenimiento }}{% else %}—{% endif %}</div>
+          </div>
+          <div>
+            <span class="text-xs ti-subtitle">Matafuego vto</span>
+            <div class="font-semibold">{% if p.matafuego_vto_nuevo %}{{ p.matafuego_vto_nuevo|date:"d/m/Y" }}{% else %}—{% endif %}</div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    {% if p.tipo == "AUXILIO" %}
+      <div class="mt-4 ti-card p-3">
+        <div class="text-sm font-semibold">Auxilio</div>
+        <div class="mt-2 grid grid-cols-1 lg:grid-cols-3 gap-2 text-sm">
+          <div>
+            <span class="text-xs ti-subtitle">Inicio</span>
+            <div class="font-semibold tabular-nums">{% if p.auxilio_inicio %}{{ p.auxilio_inicio|date:"d/m/Y H:i" }}{% else %}—{% endif %}</div>
+          </div>
+          <div>
+            <span class="text-xs ti-subtitle">Fin</span>
+            <div class="font-semibold tabular-nums">{% if p.auxilio_fin %}{{ p.auxilio_fin|date:"d/m/Y H:i" }}{% else %}—{% endif %}</div>
+          </div>
+          <div>
+            <span class="text-xs ti-subtitle">Duración</span>
+            <div class="font-semibold tabular-nums">{% if p.duracion_auxilio_min is not None %}{{ p.duracion_auxilio_min }} min{% else %}—{% endif %}</div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="mt-4 flex flex-wrap gap-2">
+      <a class="ti-btn" href="{% url 'flota:colectivo_report' p.colectivo.id %}">Volver a informe</a>
+      <a class="ti-btn" href="{% url 'flota:parte_list' %}">Ver lista</a>
+
+      <a class="ti-btn-primary"
+         href="/inventario/movimientos/nuevo/?tipo=EGRESO&colectivo={{ p.colectivo.id }}&force=1&ref=PD-{{ p.id }}&next={{ request.get_full_path|urlencode }}">
+        Registrar movimiento (inventario)
+      </a>
+    </div>
+  </section>
+
+  <section class="ti-card p-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="text-sm font-semibold">Adjuntos</div>
+        <div class="text-xs ti-subtitle">Fotos / boletas / evidencia. Se guardan en /media/</div>
+      </div>
+    </div>
+
+    <form class="mt-3 grid grid-cols-1 lg:grid-cols-3 gap-2 items-end"
+          method="post"
+          enctype="multipart/form-data"
+          action="{% url 'flota:parte_adjunto_add' p.id %}">
+      {% csrf_token %}
+      <div class="lg:col-span-2">
+        <label class="text-xs ti-subtitle">Archivo</label>
+        <input class="ti-input w-full" type="file" name="archivo" accept="image/*,.pdf">
+      </div>
+      <div>
+        <label class="text-xs ti-subtitle">Descripción</label>
+        <input class="ti-input w-full" type="text" name="descripcion" placeholder="Ej: Foto / boleta / evidencia">
+      </div>
+      <div class="lg:col-span-3">
+        <button class="ti-btn-primary" type="submit">Subir adjunto</button>
+      </div>
+    </form>
+
+    <div class="mt-4 overflow-x-auto">
+      <table class="ti-table">
+        <thead class="ti-thead">
+          <tr>
+            <th class="ti-th">Fecha</th>
+            <th class="ti-th">Descripción</th>
+            <th class="ti-th">Archivo</th>
+            <th class="ti-th text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in p.adjuntos.all %}
+            <tr class="ti-tr">
+              <td class="ti-td text-xs tabular-nums">{{ a.created_at|date:"d/m/Y H:i" }}</td>
+              <td class="ti-td text-xs">{{ a.descripcion|default:"—" }}</td>
+              <td class="ti-td text-xs">
+                <a class="ti-link" href="{{ a.archivo.url }}" target="_blank">{{ a.archivo.name }}</a>
+              </td>
+              <td class="ti-td text-right">
+                <form method="post" action="{% url 'flota:parte_adjunto_delete' p.id a.id %}">
+                  {% csrf_token %}
+                  <button class="ti-btn" type="submit">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr class="ti-tr">
+              <td class="ti-td" colspan="4"><div class="text-xs ti-subtitle">Sin adjuntos.</div></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+</div>
+{% endblock %}

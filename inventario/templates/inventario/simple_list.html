@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | Pañol ERP{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6 space-y-4">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-semibold">{{ title }}</h1>
+      <p class="text-sm text-slate-600 dark:text-slate-300">{{ subtitle }}</p>
+    </div>
+
+    {% if create_url_name %}
+      <a href="{% url create_url_name %}" class="ti-btn-primary">Nuevo</a>
+    {% endif %}
+  </div>
+
+  {% include "inventario/_nav.html" %}
+
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm overflow-hidden">
+    <div class="hidden md:block">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 dark:bg-slate-900/40 text-slate-600 dark:text-slate-300">
+          <tr>
+            <th class="text-left px-4 py-3">Nombre</th>
+            <th class="text-left px-4 py-3">Activo</th>
+            <th class="text-right px-4 py-3">Acciones</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+          {% for o in object_list %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/30">
+            <td class="px-4 py-3 font-medium">
+              {% if o.codigo %}{{ o.codigo }} · {% endif %}{{ o.nombre|default:o }}
+            </td>
+            <td class="px-4 py-3">
+              {% if o.is_active %}
+                <span class="px-2 py-1 rounded-lg text-xs border border-emerald-200 text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-200">Activo</span>
+              {% else %}
+                <span class="px-2 py-1 rounded-lg text-xs border border-slate-200 text-slate-700 dark:border-slate-800 dark:text-slate-300">Inactivo</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex justify-end gap-2">
+                {% if update_url_name %}
+                  <a class="ti-btn" href="{% url update_url_name o.id %}">Editar</a>
+                {% endif %}
+                {% if delete_url_name %}
+                  <a class="ti-btn-danger" href="{% url delete_url_name o.id %}">Eliminar</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td class="px-4 py-4 text-slate-500 dark:text-slate-400" colspan="3">No hay registros.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="md:hidden">
+      {% for o in object_list %}
+        <div class="p-4 border-b border-slate-200 dark:border-slate-800">
+          <div class="font-semibold">
+            {% if o.codigo %}{{ o.codigo }} · {% endif %}{{ o.nombre|default:o }}
+          </div>
+          <div class="mt-2 flex gap-2">
+            {% if update_url_name %}
+              <a class="ti-btn" href="{% url update_url_name o.id %}">Editar</a>
+            {% endif %}
+            {% if delete_url_name %}
+              <a class="ti-btn-danger" href="{% url delete_url_name o.id %}">Eliminar</a>
+            {% endif %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="p-4 text-slate-500 dark:text-slate-400">No hay registros.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

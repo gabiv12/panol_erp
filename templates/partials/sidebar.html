@@ -1,0 +1,239 @@
+{% load static %}
+
+<div class="flex h-full flex-col">
+
+  {# Brand #}
+  <div class="shrink-0 px-4 py-2">
+    <div class="flex items-center gap-3">
+      <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+        PE
+      </div>
+      <div class="leading-tight">
+        <div class="text-sm font-semibold">Pañol ERP</div>
+        <div class="text-xs ti-subtitle">Flota · Taller · Pañol</div>
+      </div>
+    </div>
+  </div>
+
+  {# Nav #}
+  <nav class="flex-1 min-h-0 overflow-y-auto px-3 py-3">
+
+    {% url 'core:dashboard' as url_dashboard %}
+    {% url 'flota:colectivo_list' as url_flota %}
+    {% url 'usuarios:usuario_list' as url_usuarios %}
+
+    <div class="space-y-1">
+
+      <a class="ti-navlink {% if request.path == url_dashboard %}ti-navlink-active{% endif %}"
+         href="{{ url_dashboard }}">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M3 11.5 12 4l9 7.5v8a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 19.5v-8Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M9 21v-7h6v7" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Dashboard</span>
+          <span class="ti-navsubtitle">Informe operativo</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink {% if request.path|slice:':7' == url_flota|slice:':7' %}ti-navlink-active{% endif %}"
+         href="{{ url_flota }}">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M4 16V9a2 2 0 0 1 2-2h9a3 3 0 0 1 3 3v6" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M6 16h12" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M7.5 19.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M16.5 19.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Flota</span>
+          <span class="ti-navsubtitle">Unidades y estado</span>
+        </span>
+      </a>
+
+      {% url 'inventario:movimiento_list' as url_inventario %}
+
+    <a class="ti-navlink {% if request.path|slice:':12' == '/inventario/' %}ti-navlink-active{% endif %}"
+      href="{{ url_inventario }}">
+      <span class="ti-ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+          <path d="M4 7h16M6 7V5.5A1.5 1.5 0 0 1 7.5 4h9A1.5 1.5 0 0 1 18 5.5V7" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M6 7v14h12V7" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M9 11h6" stroke="currentColor" stroke-width="1.8"/>
+        </svg>
+      </span>
+      <span class="min-w-0">
+        <span class="ti-navtitle">Inventario</span>
+        <span class="ti-navsubtitle">Productos, stock y movimientos</span>
+      </span>
+    </a>
+
+      <a class="ti-navlink ti-navlink-disabled" href="#" aria-disabled="true">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M7 7h10M7 12h10M7 17h10" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Movimientos</span>
+          <span class="ti-navsubtitle">Entradas/Salidas (Próx.)</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink ti-navlink-disabled" href="#" aria-disabled="true">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M4 20h16" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M7 20v-8l5-8 5 8v8" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Taller</span>
+          <span class="ti-navsubtitle">Órdenes de trabajo (Próx.)</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink ti-navlink-disabled" href="#" aria-disabled="true">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M7 3v4M17 3v4" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 8h16" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M5 6h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Mantenimientos</span>
+          <span class="ti-navsubtitle">Programados (Próx.)</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink ti-navlink-disabled" href="#" aria-disabled="true">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M7 7h10v10H7z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 12h3M17 12h3" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Repuestos</span>
+          <span class="ti-navsubtitle">Consumos (Próx.)</span>
+        </span>
+      </a>
+            
+      <a class="ti-navlink ti-navlink-disabled" href="#" aria-disabled="true">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M7 3h7a2 2 0 0 1 2 2v14H7V3Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M9 6h5" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M16 8l2 2v9a2 2 0 0 1-2 2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M18 10h1a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-1" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Combustible</span>
+          <span class="ti-navsubtitle">Cargas y consumo (Próx.)</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink ti-navlink-disabled" href="#" aria-disabled="true">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M6 7h12l2 4v10H4V11l2-4Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 12h16" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Compras</span>
+          <span class="ti-navsubtitle">Proveedores (Próx.)</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink ti-navlink-disabled" href="#" aria-disabled="true">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Conductores</span>
+          <span class="ti-navsubtitle">Legajos (Próx.)</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink ti-navlink-disabled" href="#" aria-disabled="true">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M7 17h10M7 12h10M7 7h10" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M5 4h14v16H5z" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Servicios</span>
+          <span class="ti-navsubtitle">Rutas (Próx.)</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink ti-navlink-disabled" href="#" aria-disabled="true">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Alertas</span>
+          <span class="ti-navsubtitle">Triage (Próx.)</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink ti-navlink-disabled" href="#" aria-disabled="true">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M4 19h16" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M7 16V8M12 16V5M17 16V11" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Reportes</span>
+          <span class="ti-navsubtitle">Operativos (Próx.)</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink {% if request.path|slice:':9' == url_usuarios|slice:':9' %}ti-navlink-active{% endif %}"
+         href="{{ url_usuarios }}">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 21a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Administración</span>
+          <span class="ti-navsubtitle">Usuarios y roles</span>
+        </span>
+      </a>
+
+    </div>
+  </nav>
+
+  {# Session / footer #}
+  <div class="shrink-0 px-4 py-3 border-t border-slate-200 dark:border-slate-800">
+    {% if user.is_authenticated %}
+      <div class="flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <div class="text-sm font-semibold truncate">{{ user.get_username }}</div>
+          <div class="text-xs ti-subtitle truncate">Sesión activa</div>
+        </div>
+        <a class="ti-btn" href="{% url 'logout' %}">Salir</a>
+      </div>
+    {% else %}
+      <a class="ti-btn" href="{% url 'login' %}">Entrar</a>
+    {% endif %}
+  </div>
+
+</div>
