@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import os
 import re
-from django.db import models
+
 from django.core.validators import FileExtensionValidator
+from django.db import models
+from django.db.models import Max
 
 
 def _safe_slug(s: str) -> str:
@@ -13,17 +15,52 @@ def _safe_slug(s: str) -> str:
     return s or "SIN-CODIGO"
 
 
+def _ensure_orden(instance: "ProductoImagen") -> int:
+    """Asegura que `orden` tenga un entero válido.
+
+    Motivo: en el inline formset, `orden` puede venir vacío y convertirse en None.
+    El `upload_to` se ejecuta antes del guardado del modelo y no puede formatear None.
+
+    Regla: si no viene `orden`, asignamos el siguiente disponible (MAX + 1) de forma determinística.
+    """
+
+    raw = getattr(instance, "orden", None)
+    try:
+        if raw is not None and str(raw).strip() != "":
+            return int(raw)
+    except Exception:
+        pass
+
+    producto_id = getattr(instance, "producto_id", None)
+    if not producto_id:
+        instance.orden = 1
+        return 1
+
+    try:
+        m = instance.__class__.objects.filter(producto_id=producto_id).aggregate(m=Max("orden"))["m"] or 0
+        next_orden = int(m) + 1
+    except Exception:
+        next_orden = 1
+
+    instance.orden = next_orden
+    return next_orden
+
+
 def producto_imagen_path(instance: "ProductoImagen", filename: str) -> str:
-    # Guardado ordenado por código interno del producto
-    base, ext = os.path.splitext(filename)
-    ext = (ext or "").lower()
+    """Path offline-friendly y ordenado por producto + orden."""
+
+    _, ext = os.path.splitext(filename)
+    ext = (ext or "").lower() or ".jpg"
+
     code = _safe_slug(getattr(instance.producto, "codigo", ""))
-    return f"productos/{code}/{instance.orden:02d}{ext or '.jpg'}"
+    orden = _ensure_orden(instance)
+
+    return f"productos/{code}/{orden:02d}{ext}"
 
 
 class ProductoImagen(models.Model):
-    """
-    Foto adjunta a un Producto.
+    """Foto adjunta a un Producto.
+
     Se usa FileField para evitar depender de Pillow. Validamos extensión manualmente.
     """
 
@@ -48,5 +85,11 @@ class ProductoImagen(models.Model):
             models.Index(fields=["producto", "orden"]),
         ]
 
+    def save(self, *args, **kwargs):
+        # Importante: esto ocurre antes de que FileField calcule el upload_to.
+        _ensure_orden(self)
+        return super().save(*args, **kwargs)
+
     def __str__(self) -> str:
-        return f"{self.producto.codigo} img#{self.orden}"
+        codigo = getattr(self.producto, "codigo", "?")
+        return f"{codigo} img#{self.orden}"

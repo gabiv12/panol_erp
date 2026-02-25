@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Editar diagrama | Flota{% endblock %}
+{% block page_title %}Editar diagrama{% endblock %}
+{% block page_subtitle %}Edición rápida del día completo{% endblock %}
+
+{% block content %}
+
+<section class="ti-card p-4 space-y-4">
+
+  <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+    <div>
+      <div class="text-sm font-semibold">{{ day|date:"d/m/Y" }}</div>
+      <div class="text-xs ti-subtitle">Editá el día completo en una tabla. Cambios típicos: reemplazos, unidad alternativa, ajustes de horario.</div>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <a class="ti-btn" href="{% url 'flota:salida_list' %}?fecha={{ day|date:'Y-m-d'|urlencode }}">Volver a Horarios</a>
+      <a class="ti-btn" href="{% url 'flota:salida_diagrama_print' %}?fecha={{ day|date:'Y-m-d'|urlencode }}" target="_blank" rel="noopener">Imprimir</a>
+    </div>
+  </div>
+
+  <form method="post" class="space-y-3">
+    {% csrf_token %}
+    {{ formset.management_form }}
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left">
+            <th class="px-3 py-2">Hora</th>
+            <th class="px-3 py-2">Unidad</th>
+            <th class="px-3 py-2">Tipo</th>
+            <th class="px-3 py-2">Estado</th>
+            <th class="px-3 py-2">Sección</th>
+            <th class="px-3 py-2">Etiqueta</th>
+            <th class="px-3 py-2">Regreso</th>
+            <th class="px-3 py-2">Chofer</th>
+            <th class="px-3 py-2">Recorrido</th>
+            <th class="px-3 py-2">Alerta</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for form in formset.forms %}
+            {% with obj=form.instance %}
+            <tr class="border-t border-slate-200 dark:border-slate-800">
+              <td class="px-3 py-2 whitespace-nowrap">{{ form.salida_programada }}</td>
+              <td class="px-3 py-2 whitespace-nowrap">{{ form.colectivo }}</td>
+              <td class="px-3 py-2 whitespace-nowrap">{{ form.tipo }}</td>
+              <td class="px-3 py-2 whitespace-nowrap">{{ form.estado }}</td>
+              <td class="px-3 py-2">{{ form.seccion }}</td>
+              <td class="px-3 py-2">{{ form.salida_label }}</td>
+              <td class="px-3 py-2">{{ form.regreso }}</td>
+              <td class="px-3 py-2">{{ form.chofer }}</td>
+              <td class="px-3 py-2">{{ form.recorrido }}</td>
+              <td class="px-3 py-2">
+                {% if obj.parte_pk %}
+                  <a class="ti-badge-danger" href="{% url 'flota:parte_detail' obj.parte_pk %}" target="_blank" rel="noopener">Revisar parte</a>
+                {% else %}
+                  <span class="ti-badge-muted">OK</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex items-center justify-end gap-2">
+      <button class="ti-btn-primary" type="submit">Guardar cambios</button>
+    </div>
+  </form>
+
+</section>
+
+{% endblock %}

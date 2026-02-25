@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}{% if object %}Editar colectivo{% else %}Nuevo colectivo{% endif %} | Pañol ERP{% endblock %}
-{% block page_title %}{% if object %}Editar colectivo{% else %}Nuevo colectivo{% endif %}{% endblock %}
+{% block title %}{% if object %}Editar unidad{% else %}Nueva unidad{% endif %} | La Termal ERP{% endblock %}
+{% block page_title %}{% if object %}Editar unidad{% else %}Nueva unidad{% endif %}{% endblock %}
 {% block page_subtitle %}Datos oficiales de la unidad.{% endblock %}
 
 {% block content %}
@@ -9,8 +9,8 @@
 
   <div class="ti-card p-4 flex items-center justify-between gap-3">
     <div class="min-w-0">
-      <div class="text-sm font-semibold">{% if object %}Editar colectivo{% else %}Nuevo colectivo{% endif %}</div>
-      <div class="text-xs ti-subtitle">Completá los campos y guardá. Los obligatorios dependen del modelo.</div>
+      <div class="text-sm font-semibold">{% if object %}Editar unidad{% else %}Nueva unidad{% endif %}</div>
+      <div class="text-xs ti-subtitle">Completá los campos y guardá.</div>
     </div>
     <a href="{% url 'flota:colectivo_list' %}" class="ti-btn">Volver</a>
   </div>
@@ -25,22 +25,73 @@
     {% endif %}
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-      {% for field in form %}
-        <div class="{% if field.name == 'observaciones' %}md:col-span-2{% endif %}">
-          <label class="ti-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
 
-          <div class="mt-1">
-            {{ field }}
+      <div class="md:col-span-2 ti-card p-4">
+        <div class="text-sm font-semibold">Matafuegos</div>
+        <div class="text-xs ti-subtitle mt-1">Cargá los vencimientos de cada matafuego y la fecha del último control.</div>
+
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="ti-label" for="{{ form.matafuego_1_vto.id_for_label }}">
+              <span class="inline-flex items-center gap-2">
+                <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                  <path d="M9 3h6v3H9V3Z" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M10 6h4v3l2 3v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8l2-3V6Z" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M9 15h6" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+                Matafuego 1
+              </span>
+            </label>
+            {{ form.matafuego_1_vto }}
+            {% if form.matafuego_1_vto.help_text %}<div class="ti-help">{{ form.matafuego_1_vto.help_text }}</div>{% endif %}
+            {% if form.matafuego_1_vto.errors %}<div class="ti-error">{{ form.matafuego_1_vto.errors|striptags }}</div>{% endif %}
           </div>
 
-          {% if field.help_text %}
-            <div class="ti-help">{{ field.help_text }}</div>
-          {% endif %}
+          <div>
+            <label class="ti-label" for="{{ form.matafuego_2_vto.id_for_label }}">
+              <span class="inline-flex items-center gap-2">
+                <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5" aria-hidden="true">
+                  <path d="M9 3h6v3H9V3Z" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M10 6h4v3l2 3v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8l2-3V6Z" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M12 12v6" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M9 15h6" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+                Matafuego 2
+              </span>
+            </label>
+            {{ form.matafuego_2_vto }}
+            {% if form.matafuego_2_vto.help_text %}<div class="ti-help">{{ form.matafuego_2_vto.help_text }}</div>{% endif %}
+            {% if form.matafuego_2_vto.errors %}<div class="ti-error">{{ form.matafuego_2_vto.errors|striptags }}</div>{% endif %}
+          </div>
 
-          {% if field.errors %}
-            <div class="ti-error">{{ field.errors|striptags }}</div>
-          {% endif %}
+          <div>
+            <label class="ti-label" for="{{ form.matafuego_ult_control.id_for_label }}">Último control</label>
+            {{ form.matafuego_ult_control }}
+            {% if form.matafuego_ult_control.help_text %}<div class="ti-help">{{ form.matafuego_ult_control.help_text }}</div>{% endif %}
+            {% if form.matafuego_ult_control.errors %}<div class="ti-error">{{ form.matafuego_ult_control.errors|striptags }}</div>{% endif %}
+          </div>
         </div>
+
+        {% if object %}
+          <div class="mt-3 text-xs ti-subtitle">
+            Próximo vencimiento: <span class="font-semibold">{{ object.matafuego_proximo_vencimiento|default:"—" }}</span>
+            {% if object.matafuego_dias_restantes != None %}
+              · Días: <span class="font-semibold tabular-nums">{{ object.matafuego_dias_restantes }}</span>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+
+      {% for field in form %}
+        {% if field.name == "matafuego_1_vto" or field.name == "matafuego_2_vto" or field.name == "matafuego_ult_control" %}
+        {% else %}
+          <div class="{% if field.name == 'observaciones' %}md:col-span-2{% endif %}">
+            <label class="ti-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            <div class="mt-1">{{ field }}</div>
+            {% if field.help_text %}<div class="ti-help">{{ field.help_text }}</div>{% endif %}
+            {% if field.errors %}<div class="ti-error">{{ field.errors|striptags }}</div>{% endif %}
+          </div>
+        {% endif %}
       {% endfor %}
     </div>
 

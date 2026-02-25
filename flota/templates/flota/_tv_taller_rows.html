@@ -1,0 +1,63 @@
+{% for it in items %}
+<tr>
+  <td class="px-5 py-4 whitespace-nowrap align-top">
+    {% if it.next_dt %}
+      <div class="text-lg font-semibold">{{ it.next_dt|date:"H:i" }}</div>
+      <div class="text-sm text-slate-300">
+        {% if it.next_seccion %}{{ it.next_seccion }}{% endif %}
+        {% if it.next_label %}{% if it.next_seccion %} · {% endif %}{{ it.next_label }}{% endif %}
+      </div>
+    {% else %}
+      <div class="text-slate-300 text-lg">—</div>
+      <div class="text-sm text-slate-400">Sin salida en rango</div>
+    {% endif %}
+  </td>
+
+  <td class="px-5 py-4 whitespace-nowrap align-top">
+    <div class="text-lg font-semibold">Int {{ it.colectivo.interno }}</div>
+    <div class="text-sm text-slate-300">{{ it.colectivo.dominio }}</div>
+  </td>
+
+  <td class="px-5 py-4 whitespace-nowrap align-top">
+    {% if it.severidad == "CRITICA" %}
+      <span class="ti-badge-danger px-3 py-1 text-sm font-semibold">Crítica</span>
+    {% elif it.severidad == "ALTA" %}
+      <span class="ti-badge-warning px-3 py-1 text-sm font-semibold">Alta</span>
+    {% elif it.severidad == "MEDIA" %}
+      <span class="ti-badge-muted px-3 py-1 text-sm font-semibold">Media</span>
+    {% else %}
+      <span class="ti-badge-muted px-3 py-1 text-sm font-semibold">Baja</span>
+    {% endif %}
+  </td>
+
+  <td class="px-5 py-4 whitespace-nowrap align-top">
+    <span class="ti-badge-muted px-3 py-1 text-sm font-semibold">{{ it.get_tipo_display }}</span>
+  </td>
+
+  <td class="px-5 py-4 align-top">
+    <div class="text-lg font-semibold">
+      <a class="hover:underline" href="{% url 'flota:parte_detail' it.id %}" target="_blank" rel="noopener">
+        {{ it.descripcion|truncatechars:120 }}
+      </a>
+    </div>
+    <div class="text-sm text-slate-300 mt-1">
+      {{ it.fecha_evento|date:"d/m H:i" }} · PD-{{ it.id }}
+      {% if it.reportado_por %} · {{ it.reportado_por.username }}{% endif %}
+    </div>
+  </td>
+
+  <td class="px-5 py-4 whitespace-nowrap align-top">
+    {% if it.estado == "EN_PROCESO" %}
+      <span class="ti-badge-warning px-3 py-1 text-sm font-semibold">En proceso</span>
+    {% else %}
+      <span class="ti-badge-muted px-3 py-1 text-sm font-semibold">Abierto</span>
+    {% endif %}
+  </td>
+</tr>
+{% empty %}
+<tr>
+  <td colspan="6" class="px-5 py-10 text-center text-slate-300 text-lg">
+    No hay partes abiertos/en proceso en los últimos {{ days }} días.
+  </td>
+</tr>
+{% endfor %}

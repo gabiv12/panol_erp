@@ -94,6 +94,16 @@ class ProveedorForm(forms.ModelForm):
 
 
 class ProductoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for _, field in self.fields.items():
+            w = field.widget
+            cls = (w.attrs.get('class') or '').strip()
+            if isinstance(w, forms.CheckboxInput):
+                continue
+            if 'ti-input' not in cls:
+                w.attrs['class'] = (cls + ' ti-input').strip()
+
     class Meta:
         model = Producto
         fields = [

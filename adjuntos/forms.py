@@ -1,45 +1,67 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from django import forms
 from django.forms import inlineformset_factory
-from django.core.exceptions import ValidationError
 
 from inventario.models import Producto
 from .models import ProductoImagen
 
 
-MAX_IMG_MB = 4
-MAX_IMG_BYTES = MAX_IMG_MB * 1024 * 1024
-
-
 class ProductoImagenForm(forms.ModelForm):
+    """
+    Evita que formularios extra vacíos queden "changed" por defaults (ej: orden=1)
+    y rompan el guardado de la imagen real.
+    """
+
     class Meta:
         model = ProductoImagen
-        fields = ["imagen", "titulo", "orden"]
+        fields = ("imagen", "titulo", "orden")
 
-        widgets = {
-            "imagen": forms.ClearableFileInput(attrs={"class": "ti-input", "accept": "image/*"}),
-            "titulo": forms.TextInput(attrs={"class": "ti-input", "placeholder": "Opcional (ej: frente / etiqueta / detalle)"}),
-            "orden": forms.NumberInput(attrs={"class": "ti-input", "min": 1}),
-        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def clean_imagen(self):
-        f = self.cleaned_data.get("imagen")
-        if not f:
-            return f
+        if "titulo" in self.fields:
+            self.fields["titulo"].required = False
 
-        if hasattr(f, "size") and f.size > MAX_IMG_BYTES:
-            raise ValidationError(f"Imagen demasiado grande. Máximo {MAX_IMG_MB} MB.")
+        if "orden" in self.fields:
+            self.fields["orden"].required = False
+            # En forms extra (sin pk), no uses initial por default del modelo
+            if not getattr(self.instance, "pk", None):
+                self.initial.pop("orden", None)
+                self.fields["orden"].initial = None
 
-        return f
+    def has_changed(self) -> bool:
+        changed = super().has_changed()
+        if not changed:
+            return False
+
+        imagen_key = self.add_prefix("imagen")
+        titulo_key = self.add_prefix("titulo")
+        orden_key = self.add_prefix("orden")
+        delete_key = self.add_prefix("DELETE")
+
+        if (self.data.get(delete_key) or "").strip():
+            return True
+
+        has_file = bool(self.files.get(imagen_key))
+        titulo = (self.data.get(titulo_key) or "").strip()
+        orden = (self.data.get(orden_key) or "").strip()
+
+        # Si no hay archivo ni título y el orden es vacío/1, tratarlo como vacío
+        if (not has_file) and (not titulo) and (orden in ("", "1")):
+            return False
+
+        return True
 
 
-ProductoImagenInlineFormSet = inlineformset_factory(
-    Producto,
-    ProductoImagen,
+ProductoImagenFormSet = inlineformset_factory(
+    parent_model=Producto,
+    model=ProductoImagen,
     form=ProductoImagenForm,
     extra=2,
-    max_num=2,
     can_delete=True,
-    validate_max=True,
 )
+
+# Backwards-compat: nombre viejo usado por inventario/views.py
+ProductoImagenInlineFormSet = ProductoImagenFormSet
+

@@ -234,14 +234,6 @@ class MovimientoStock(TimeStampedModel):
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT, related_name="movimientos")
     ubicacion = models.ForeignKey(Ubicacion, on_delete=models.PROTECT, related_name="movimientos")
 
-    colectivo = models.ForeignKey(
-    "flota.Colectivo",
-    on_delete=models.SET_NULL,
-    blank=True,
-    null=True,
-    related_name="movimientos_stock",
-)
-
     # NUEVO: vínculo a unidad (opcional) para informes y trazabilidad real
     colectivo = models.ForeignKey(
         "flota.Colectivo",

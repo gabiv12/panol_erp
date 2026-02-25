@@ -1,16 +1,17 @@
-{% load static %}
+﻿{% load static %}
 
 <div class="flex h-full flex-col">
 
   {# Brand #}
   <div class="shrink-0 px-4 py-2">
     <div class="flex items-center gap-3">
-      <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
-        PE
-      </div>
+      <div class="relative h-10 w-10 shrink-0">
+  <img src="{% static 'img/fondo_blanco.svg' %}" alt="La Termal ERP" class="h-10 w-10 rounded-full bg-white p-1 dark:hidden" />
+  <img src="{% static 'img/fondo_oscuro.svg' %}" alt="La Termal ERP" class="h-10 w-10 rounded-full bg-transparent p-0 hidden dark:block" />
+</div>
       <div class="leading-tight">
-        <div class="text-sm font-semibold">Pañol ERP</div>
-        <div class="text-xs ti-subtitle">Flota · Taller · Pañol</div>
+        <div class="text-sm font-semibold">La Termal ERP</div>
+        <div class="text-xs ti-subtitle">Flota · Taller · Inventario</div>
       </div>
     </div>
   </div>
@@ -20,6 +21,10 @@
 
     {% url 'core:dashboard' as url_dashboard %}
     {% url 'flota:colectivo_list' as url_flota %}
+    {% url 'flota:parte_list' as url_partes %}
+    {% url 'flota:salida_list' as url_salidas %}
+    {% url 'flota:plan_15' as url_plan_15 %}
+    {% url 'flota:informe_flota' as url_informe_flota %}
     {% url 'usuarios:usuario_list' as url_usuarios %}
 
     <div class="space-y-1">
@@ -38,7 +43,7 @@
         </span>
       </a>
 
-      <a class="ti-navlink {% if request.path|slice:':7' == url_flota|slice:':7' %}ti-navlink-active{% endif %}"
+      <a class="ti-navlink {% if request.resolver_match and request.resolver_match.app_name == 'flota' and request.resolver_match.url_name and 'colectivo' in request.resolver_match.url_name %}ti-navlink-active{% endif %}"
          href="{{ url_flota }}">
         <span class="ti-ico" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
@@ -53,6 +58,68 @@
           <span class="ti-navsubtitle">Unidades y estado</span>
         </span>
       </a>
+
+
+      <a class="ti-navlink {% if request.path|slice:':13' == '/flota/informe/' %}ti-navlink-active{% endif %}"
+         href="{{ url_informe_flota }}">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M8 7h8M8 11h8M8 15h6" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Informe flota</span>
+          <span class="ti-navsubtitle">Estado general</span>
+        </span>
+      </a>
+
+      <a class="ti-navlink {% if request.resolver_match and request.resolver_match.app_name == 'flota' and request.resolver_match.url_name and 'parte' in request.resolver_match.url_name %}ti-navlink-active{% endif %}"
+         href="{{ url_partes }}">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M7 3v4M17 3v4" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 8h16" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M6 12h6M6 16h10" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M5 6h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Partes diarios</span>
+          <span class="ti-navsubtitle">Registro y seguimiento</span>
+        </span>
+      </a>
+
+<a class="ti-navlink {% if request.resolver_match and request.resolver_match.app_name == 'flota' and request.resolver_match.url_name and 'salida' in request.resolver_match.url_name %}ti-navlink-active{% endif %}"
+   href="{{ url_salidas }}">
+  <span class="ti-ico" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+      <path d="M12 7v6l4 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" stroke="currentColor" stroke-width="1.8"/>
+    </svg>
+  </span>
+  <span class="min-w-0">
+    <span class="block text-sm font-medium">Horarios</span>
+    <span class="block text-xs ti-subtitle">Salidas programadas</span>
+  </span>
+</a>
+
+      <a class="ti-navlink {% if request.path|slice:':11' == '/flota/plan/' %}ti-navlink-active{% endif %}"
+         href="{{ url_plan_15 }}">
+        <span class="ti-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M7 3v4M17 3v4" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 8h16" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M6 12h6M6 16h10" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+        </span>
+        <span class="min-w-0">
+          <span class="block text-sm font-medium">Plan 15 días</span>
+          <span class="block text-xs ti-subtitle">Planificación quincenal</span>
+        </span>
+      </a>
+
+
 
       {% url 'inventario:movimiento_list' as url_inventario %}
 
@@ -237,3 +304,7 @@
   </div>
 
 </div>
+
+
+
+

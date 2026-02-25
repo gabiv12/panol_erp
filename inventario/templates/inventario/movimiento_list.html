@@ -18,6 +18,64 @@
     <a class="ti-btn-primary" href="{% url 'inventario:movimiento_create' %}">+ Nuevo movimiento</a>
   </section>
 
+<!-- Filtros rápidos (operativo) -->
+{% if filterset %}
+<section class="ti-card p-4 space-y-3">
+  <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+    <div>
+      <div class="text-sm font-semibold">Filtros</div>
+      <div class="text-xs ti-subtitle">Usá chips para filtrar rápido o abrí filtros avanzados.</div>
+    </div>
+    <a class="ti-btn" href="{% url 'inventario:movimiento_list' %}">Limpiar</a>
+  </div>
+
+  {% with cur_days=request.GET.days|default:'' cur_tipo=request.GET.tipo|default:'' %}
+  <div class="flex flex-wrap gap-2">
+    <a class="{% if cur_days == '1' %}ti-btn-primary{% else %}ti-btn{% endif %} px-3 py-1 text-xs" href="?{% qs_replace days=1 page='' %}">Hoy</a>
+    <a class="{% if cur_days == '7' %}ti-btn-primary{% else %}ti-btn{% endif %} px-3 py-1 text-xs" href="?{% qs_replace days=7 page='' %}">7 días</a>
+    <a class="{% if cur_days == '30' or cur_days == '' %}ti-btn-primary{% else %}ti-btn{% endif %} px-3 py-1 text-xs" href="?{% qs_replace days=30 page='' %}">30 días</a>
+
+    <span class="mx-1 text-xs ti-subtitle self-center">|</span>
+
+    <a class="{% if cur_tipo == 'INGRESO' %}ti-btn-primary{% else %}ti-btn{% endif %} px-3 py-1 text-xs" href="?{% qs_replace tipo='INGRESO' page='' %}">Entradas</a>
+    <a class="{% if cur_tipo == 'EGRESO' %}ti-btn-primary{% else %}ti-btn{% endif %} px-3 py-1 text-xs" href="?{% qs_replace tipo='EGRESO' page='' %}">Salidas</a>
+    <a class="{% if cur_tipo == 'AJUSTE' %}ti-btn-primary{% else %}ti-btn{% endif %} px-3 py-1 text-xs" href="?{% qs_replace tipo='AJUSTE' page='' %}">Ajustes</a>
+    <a class="{% if cur_tipo == 'TRANSFERENCIA' %}ti-btn-primary{% else %}ti-btn{% endif %} px-3 py-1 text-xs" href="?{% qs_replace tipo='TRANSFERENCIA' page='' %}">Transfer.</a>
+  </div>
+  {% endwith %}
+
+  <details class="ti-card p-3">
+    <summary class="cursor-pointer text-sm font-semibold">Filtros avanzados</summary>
+    <form method="get" class="mt-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
+      <div class="md:col-span-4">
+        <label class="text-xs ti-subtitle">Buscar</label>
+        {{ filterset.form.q }}
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-xs ti-subtitle">Producto</label>
+        {{ filterset.form.producto }}
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-xs ti-subtitle">Ubicación</label>
+        {{ filterset.form.ubicacion }}
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-xs ti-subtitle">Interno</label>
+        {{ filterset.form.colectivo }}
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-xs ti-subtitle">Días</label>
+        {{ filterset.form.days }}
+      </div>
+      <div class="md:col-span-12 flex justify-end gap-2">
+        <a class="ti-btn" href="{% url 'inventario:movimiento_list' %}">Limpiar</a>
+        <button class="ti-btn-primary" type="submit">Aplicar</button>
+      </div>
+    </form>
+  </details>
+</section>
+{% endif %}
+
   <!-- Tabla -->
   <section class="ti-card p-0 overflow-hidden">
     <div class="overflow-x-auto">
@@ -31,7 +89,7 @@
             <th class="ti-th">Destino</th>
             <th class="ti-th">Unidad</th>
             <th class="ti-th text-right">Cantidad</th>
-            <th class="ti-th">Proveedor</th>
+            <th class="ti-th hidden lg:table-cell">Proveedor</th>
             <th class="ti-th">Referencia</th>
             <th class="ti-th text-right">Acciones</th>
           </tr>
@@ -40,7 +98,9 @@
         <tbody>
           {% for mov in movimientos %}
             <tr class="ti-tr">
-              <td class="ti-td tabular-nums">{{ mov.fecha|date:"d/m/Y H:i" }}</td>
+              <td class="ti-td tabular-nums">{{ mov.fecha|date:"d/m/Y H:i" }}
+                <div class="text-[11px] ti-subtitle">{% if mov.usuario %}{{ mov.usuario.username }}{% else %}—{% endif %}</div>
+              </td>
 
               <td class="ti-td">
                 {% if mov.tipo == 'INGRESO' %}
@@ -80,7 +140,7 @@
 
               <td class="ti-td text-right tabular-nums">{{ mov.cantidad|qty:mov.producto.unidad_medida }}</td>
 
-              <td class="ti-td">
+              <td class="ti-td hidden lg:table-cell">
                 {% if mov.proveedor %}
                   {{ mov.proveedor.nombre }}
                 {% else %}
@@ -88,13 +148,26 @@
                 {% endif %}
               </td>
 
-              <td class="ti-td">{{ mov.referencia|default:"—" }}</td>
+              <td class="ti-td">
+                {% if mov.referencia %}
+                  {% if mov.referencia|slice:":3" == "PD-" %}
+                    <span class="ti-badge-info">{{ mov.referencia }}</span>
+                  {% else %}
+                    <span class="font-semibold">{{ mov.referencia }}</span>
+                  {% endif %}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
 
               <td class="ti-td text-right">
-                <div class="flex justify-end gap-2">
-                  <a class="ti-btn" href="{% url 'inventario:movimiento_update' mov.pk %}">Editar</a>
-                  <a class="ti-btn" href="{% url 'inventario:movimiento_delete' mov.pk %}">Eliminar</a>
-                </div>
+                <details class="relative inline-block">
+                  <summary class="ti-btn list-none cursor-pointer">…</summary>
+                  <div class="absolute right-0 mt-2 w-40 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-lg p-2 z-20">
+                    <a class="ti-btn w-full justify-center" href="{% url 'inventario:movimiento_update' mov.pk %}">Editar</a>
+                    <a class="ti-btn-danger w-full justify-center mt-2" href="{% url 'inventario:movimiento_delete' mov.pk %}">Eliminar</a>
+                  </div>
+                </details>
               </td>
             </tr>
 

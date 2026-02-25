@@ -1,43 +1,37 @@
-﻿# ---- Python / Django ----
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-*.egg-info/
-.Python
-env/
-venv/
-.venv/
-.env
-.env.*
+﻿Set-Location "C:\Users\gabi\Desktop\2026\panol_erp"
 
-# ---- Django ----
+@'
+# Python / Django
+__pycache__/
+*.pyc
+*.pyo
+*.log
+*.sqlite3
 db.sqlite3
-db.sqlite3-journal
-local_settings.py
+*.egg-info/
+.env
+.venv/
+venv/
+
+# Django static/media build artifacts
 staticfiles/
 media/
 
-# ---- Node ----
+# Node / Tailwind
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# ---- IDE / OS ----
-.vscode/
-.idea/
-*.swp
+# Test / tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# OS
 Thumbs.db
 Desktop.ini
-
-# ---- Tu proyecto (backups/trash) ----
-_trash/
-_backups/
-_backup_usuarios_*/
-*.bak
-*.bak.*
-*.disabled_*
-panol_erp_inventario_showcase_fix/
-
+.DS_Store
+'@ | Set-Content -Encoding UTF8 .gitignore

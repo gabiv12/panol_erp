@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Salida programada | Flota{% endblock %}
+{% block page_title %}Salida programada{% endblock %}
+{% block page_subtitle %}Cargar o editar una salida{% endblock %}
+
+{% block content %}
+
+<section class="ti-card p-4">
+  <form method="post" class="space-y-4" id="salidaForm" data-colectivo-info-url="{% url 'flota:api_colectivo_info' %}">
+    {% csrf_token %}
+
+    <div class="flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold">Cargar en 3 pasos</div>
+        <div class="text-xs ti-subtitle">1) Unidad y horario · 2) Diagrama · 3) Detalles</div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <a class="ti-btn" href="{% url 'flota:salida_list' %}?fecha={{ fecha|urlencode }}">Volver</a>
+        <button class="ti-btn-primary" type="submit" id="btnGuardarTop">Guardar</button>
+      </div>
+    </div>
+
+    {% if form.errors %}
+      <div class="ti-card p-3">
+        <div class="text-sm font-semibold">No se pudo guardar</div>
+        <div class="text-xs ti-subtitle mt-1">Revisá los campos marcados.</div>
+      </div>
+    {% endif %}
+
+    <div class="ti-card p-3">
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="ti-btn" data-step-btn="1">Paso 1</button>
+        <button type="button" class="ti-btn" data-step-btn="2">Paso 2</button>
+        <button type="button" class="ti-btn" data-step-btn="3">Paso 3</button>
+        <span class="ti-badge-muted ml-auto" id="stepLabel">Paso 1/3</span>
+      </div>
+    </div>
+
+    <section class="ti-card p-4 space-y-4" data-step="1">
+      <div>
+        <div class="text-sm font-semibold">Paso 1: Unidad y horario</div>
+        <div class="text-xs ti-subtitle">Elegí la unidad y la hora de salida. Si estás armando el diagrama, repetí este paso por cada salida.</div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs ti-subtitle">Unidad <span class="text-red-500">*</span></label>
+          {{ form.colectivo }}
+          {% if form.colectivo.errors %}<div class="ti-field-error">{{ form.colectivo.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="text-xs ti-subtitle">Hora de salida <span class="text-red-500">*</span></label>
+          {{ form.salida_programada }}
+          {% if form.salida_programada.errors %}<div class="ti-field-error">{{ form.salida_programada.errors }}</div>{% endif %}
+          <div class="text-xs ti-subtitle mt-1">Elegí fecha y hora.</div>
+        </div>
+
+        <div>
+          <label class="text-xs ti-subtitle">Tipo</label>
+          {{ form.tipo }}
+          {% if form.tipo.errors %}<div class="ti-field-error">{{ form.tipo.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="text-xs ti-subtitle">Estado</label>
+          {{ form.estado }}
+          {% if form.estado.errors %}<div class="ti-field-error">{{ form.estado.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div id="colectivoInfo" class="ti-card p-3 hidden">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-sm font-semibold" id="colectivoInfoTitle">Unidad</div>
+            <div class="text-xs ti-subtitle" id="colectivoInfoSub">Estado operativo</div>
+          </div>
+          <span class="ti-badge-muted" id="colectivoInfoBadge">—</span>
+        </div>
+        <div class="mt-2 text-sm" id="colectivoInfoMsg"></div>
+        <div class="mt-2 text-xs ti-subtitle" id="colectivoInfoLast"></div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2">
+        <button type="button" class="ti-btn-primary" data-next-step>Siguiente</button>
+      </div>
+    </section>
+
+    <section class="ti-card p-4 space-y-4 hidden" data-step="2">
+      <div>
+        <div class="text-sm font-semibold">Paso 2: Diagrama</div>
+        <div class="text-xs ti-subtitle">Cargá el texto como en la planilla en papel (sección, etiqueta y regreso).</div>
+      </div>
+
+      <datalist id="dl_secciones">
+        {% for x in datalist_secciones %}<option value="{{ x }}"></option>{% endfor %}
+      </datalist>
+      <datalist id="dl_etiquetas">
+        {% for x in datalist_etiquetas %}<option value="{{ x }}"></option>{% endfor %}
+      </datalist>
+      <datalist id="dl_regresos">
+        {% for x in datalist_regresos %}<option value="{{ x }}"></option>{% endfor %}
+      </datalist>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="lg:col-span-2">
+          <label class="text-xs ti-subtitle">Sección (grupo del diagrama)</label>
+          {{ form.seccion }}
+          {% if form.seccion.errors %}<div class="ti-field-error">{{ form.seccion.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="text-xs ti-subtitle">Etiqueta de salida (como papel)</label>
+          {{ form.salida_label }}
+          {% if form.salida_label.errors %}<div class="ti-field-error">{{ form.salida_label.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="text-xs ti-subtitle">Regreso</label>
+          {{ form.regreso }}
+          {% if form.regreso.errors %}<div class="ti-field-error">{{ form.regreso.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2">
+        <button type="button" class="ti-btn" data-prev-step>Anterior</button>
+        <button type="button" class="ti-btn-primary" data-next-step>Siguiente</button>
+      </div>
+    </section>
+
+    <section class="ti-card p-4 space-y-4 hidden" data-step="3">
+      <div>
+        <div class="text-sm font-semibold">Paso 3: Detalles</div>
+        <div class="text-xs ti-subtitle">Chofer y recorrido son opcionales. Si no los tenés, podés guardarlo igual.</div>
+      </div>
+
+      <datalist id="dl_choferes">
+        {% for x in datalist_choferes %}<option value="{{ x }}"></option>{% endfor %}
+      </datalist>
+      <datalist id="dl_recorridos">
+        {% for x in datalist_recorridos %}<option value="{{ x }}"></option>{% endfor %}
+      </datalist>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs ti-subtitle">Chofer (opcional)</label>
+          {{ form.chofer }}
+          {% if form.chofer.errors %}<div class="ti-field-error">{{ form.chofer.errors }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="text-xs ti-subtitle">Recorrido (opcional)</label>
+          {{ form.recorrido }}
+          {% if form.recorrido.errors %}<div class="ti-field-error">{{ form.recorrido.errors }}</div>{% endif %}
+        </div>
+
+        <div class="lg:col-span-2">
+          <label class="text-xs ti-subtitle">Llega / regreso programado (opcional)</label>
+          {{ form.llegada_programada }}
+          {% if form.llegada_programada.errors %}<div class="ti-field-error">{{ form.llegada_programada.errors }}</div>{% endif %}
+        </div>
+
+        <div class="lg:col-span-2">
+          <label class="text-xs ti-subtitle">Nota (opcional)</label>
+          {{ form.nota }}
+          {% if form.nota.errors %}<div class="ti-field-error">{{ form.nota.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2">
+        <button type="button" class="ti-btn" data-prev-step>Anterior</button>
+        <button class="ti-btn-primary" type="submit">Guardar</button>
+      </div>
+    </section>
+
+  {% if salida_log %}
+<section class="ti-card p-4">
+  <div class="text-sm font-semibold">Historial de cambios</div>
+  <div class="mt-2 space-y-2 text-sm">
+    {% for log in salida_log %}
+      <div class="flex items-start justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <div class="min-w-0">
+          <div class="text-xs ti-subtitle">{{ log.action_time|date:"d/m H:i" }}</div>
+          <div class="text-sm break-words">{{ log.change_message }}</div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+</form>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'flota/js/salida_wizard.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% load static %}
+<!doctype html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Taller (TV) | La Termal ERP</title>
+  <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+</head>
+
+<body class="h-screen min-h-screen flex flex-col bg-slate-950 text-slate-100">
+  <header class="px-6 py-4 border-b border-slate-800 flex items-end justify-between gap-4">
+    <div class="min-w-0">
+      <div class="text-2xl font-bold">Taller</div>
+      <div class="text-sm text-slate-300">
+        Partes abiertos/en proceso · Prioridad por próxima salida ({{ hours }}h)
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-2 text-sm text-slate-200">
+        <span class="ti-badge-danger px-3 py-1 text-sm font-semibold">Crítica</span>
+        <span class="ti-badge-warning px-3 py-1 text-sm font-semibold">Alta</span>
+        <span class="ti-badge-muted px-3 py-1 text-sm font-semibold">Media</span>
+        <span class="ti-badge-muted px-3 py-1 text-sm font-semibold">Baja</span>
+        <span class="ti-badge-muted px-3 py-1 text-sm font-semibold">Abierto</span>
+        <span class="ti-badge-warning px-3 py-1 text-sm font-semibold">En proceso</span>
+      </div>
+    </div>
+
+    <div class="shrink-0 text-sm text-slate-300 text-right">
+      <div id="tv_clock">{{ now|date:"d/m/Y H:i" }}</div>
+      
+    </div>
+  </header>
+
+  <div id="fs_overlay" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+    <button id="fs_btn" class="ti-btn-primary text-lg px-8 py-5">Pantalla completa</button>
+  </div>
+
+  <main class="flex-1 overflow-y-auto p-6">
+    <section class="ti-card p-0 overflow-hidden bg-slate-900 border border-slate-800">
+      <div class="overflow-x-auto">
+        <table class="w-full text-base text-slate-100">
+          <thead class="sticky top-0 bg-slate-900">
+            <tr class="text-sm text-slate-300">
+              <th class="text-left px-5 py-4">Sale</th>
+              <th class="text-left px-5 py-4">Unidad</th>
+              <th class="text-left px-5 py-4">Severidad</th>
+              <th class="text-left px-5 py-4">Tipo</th>
+              <th class="text-left px-5 py-4">Descripción</th>
+              <th class="text-left px-5 py-4">Estado</th>
+            </tr>
+          </thead>
+
+          <tbody id="taller_rows" class="divide-y divide-slate-800">
+            {% include "flota/_tv_taller_rows.html" %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+  (function () {
+    const overlay = document.getElementById('fs_overlay');
+    const btn = document.getElementById('fs_btn');
+    const tbody = document.getElementById('taller_rows');
+    const clock = document.getElementById('tv_clock');
+
+    function hideOverlay() {
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    async function enterFullscreen() {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        }
+      } catch (e) {
+      } finally {
+        hideOverlay();
+      }
+    }
+
+    if (btn) {
+      btn.addEventListener('click', enterFullscreen);
+    }
+    if (document.fullscreenElement) {
+      hideOverlay();
+    }
+
+    function pad(n){ return String(n).padStart(2,'0'); }
+    function tickClock(){
+      const d = new Date();
+      if (!clock) return;
+      clock.textContent = `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    setInterval(tickClock, 30000);
+
+    const refreshSec = Number({{ refresh_sec|default:20 }}) || 20;
+
+    async function refreshRows(){
+      if (!tbody) return;
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('partial', '1');
+        const res = await fetch(url.toString(), { headers: { 'X-Requested-With': 'fetch' } });
+        if (!res.ok) return;
+        const html = await res.text();
+        tbody.innerHTML = html;
+      } catch (e) {
+      }
+    }
+
+    setInterval(refreshRows, refreshSec * 1000);
+  })();
+  </script>
+</body>
+</html>

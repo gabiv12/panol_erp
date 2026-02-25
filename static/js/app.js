@@ -1,158 +1,193 @@
-/* static/js/app.js
-   Pañol ERP - UI Core (layout)
-   - Drawer mobile (sidebar)
-   - Toggle tema (claro/oscuro) con persistencia
-   - Helpers pequeños (clock en topbar, toggle password por data-attrs)
-
-   Reglas del proyecto:
-   - NO inline JS en templates
-   - Este archivo solo maneja UI base. Lo específico de cada vista va en static/js/pages/...
+﻿/* static/js/app.js
+   UI base: drawer mobile + theme toggle + clock + progress bars
+   - Robusto: soporta IDs (#drawer/#drawerOverlay) y data-attrs ([data-drawer], [data-drawer-overlay])
+   - Robusto: listeners en capture + touchend (no lo rompe stopPropagation)
 */
 
 (function () {
   "use strict";
 
-  // =====================
-  // Theme
-  // =====================
+  // ---------------------------
+  // Helpers
+  // ---------------------------
+  function qs(sel, root) {
+    return (root || document).querySelector(sel);
+  }
+  function qsa(sel, root) {
+    return Array.prototype.slice.call((root || document).querySelectorAll(sel));
+  }
+
+  // ---------------------------
+  // Theme (dark/light)
+  // ---------------------------
   function getStoredTheme() {
-    return localStorage.getItem("theme"); // "dark" | "light" | null
+    try {
+      return localStorage.getItem("theme");
+    } catch (e) {
+      return null;
+    }
   }
 
-  function prefersDark() {
-    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  function setStoredTheme(v) {
+    try {
+      localStorage.setItem("theme", v);
+    } catch (e) {}
   }
 
-  function isDarkActive() {
-    const stored = getStoredTheme();
-    if (stored === "dark") return true;
-    if (stored === "light") return false;
-    return prefersDark();
+  function applyTheme(theme) {
+    var html = document.documentElement;
+    var isDark = theme === "dark";
+    html.classList.toggle("dark", isDark);
+
+    var btn = qs("[data-theme-toggle]");
+    if (btn) {
+      btn.textContent = isDark ? "Oscuro" : "Claro";
+      btn.setAttribute("aria-pressed", isDark ? "true" : "false");
+    }
   }
 
-  function applyTheme(isDark) {
-    document.documentElement.classList.toggle("dark", !!isDark);
-  }
+  function initThemeToggle() {
+    var stored = getStoredTheme();
+    if (!stored) {
+      stored = document.documentElement.classList.contains("dark") ? "dark" : "light";
+      setStoredTheme(stored);
+    }
+    applyTheme(stored);
 
-  function setThemeStored(isDark) {
-    localStorage.setItem("theme", isDark ? "dark" : "light");
-  }
+    var btn = qs("[data-theme-toggle]");
+    if (!btn) return;
 
-  function refreshThemeButton() {
-    const icon = document.querySelector("[data-theme-icon]");
-    const text = document.querySelector("[data-theme-text]");
-    if (!icon || !text) return;
-
-    const dark = document.documentElement.classList.contains("dark");
-    icon.textContent = dark ? "☀" : "☾";
-    text.textContent = dark ? "Claro" : "Oscuro";
-  }
-
-  function initTheme() {
-    applyTheme(isDarkActive());
-    refreshThemeButton();
-
-    document.addEventListener("click", (ev) => {
-      const btn = ev.target.closest("[data-theme-toggle]");
-      if (!btn) return;
-
-      const dark = !document.documentElement.classList.contains("dark");
-      applyTheme(dark);
-      setThemeStored(dark);
-      refreshThemeButton();
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      var current = getStoredTheme() || "light";
+      var next = current === "dark" ? "light" : "dark";
+      setStoredTheme(next);
+      applyTheme(next);
     });
   }
 
-  // =====================
+  // ---------------------------
   // Drawer (mobile sidebar)
-  // =====================
-  const drawer = () => document.getElementById("tiDrawer");
-  const overlay = () => document.getElementById("tiOverlay");
+  // ---------------------------
+  function getDrawerEl() {
+    return (
+      qs("[data-drawer]") ||
+      qs("#drawer") ||
+      qs("#tiDrawer")
+    );
+  }
+
+  function getOverlayEl() {
+    return (
+      qs("[data-drawer-overlay]") ||
+      qs("#drawerOverlay") ||
+      qs("#tiOverlay")
+    );
+  }
 
   function openDrawer() {
-    const d = drawer();
-    const o = overlay();
-    if (!d || !o) return;
+    var drawer = getDrawerEl();
+    var overlay = getOverlayEl();
+    if (!drawer || !overlay) return;
 
-    d.classList.remove("-translate-x-full");
-    o.classList.remove("hidden");
+    drawer.classList.remove("hidden");
+    overlay.classList.remove("hidden");
     document.body.classList.add("overflow-hidden");
   }
 
   function closeDrawer() {
-    const d = drawer();
-    const o = overlay();
-    if (!d || !o) return;
+    var drawer = getDrawerEl();
+    var overlay = getOverlayEl();
+    if (!drawer || !overlay) return;
 
-    d.classList.add("-translate-x-full");
-    o.classList.add("hidden");
+    drawer.classList.add("hidden");
+    overlay.classList.add("hidden");
     document.body.classList.remove("overflow-hidden");
   }
 
+  function isOpenBtn(target) {
+    return !!(target && target.closest && target.closest("[data-drawer-open]"));
+  }
+
+  function isCloseBtn(target) {
+    return !!(target && target.closest && target.closest("[data-drawer-close]"));
+  }
+
+  function isOverlay(target) {
+    if (!target) return false;
+    if (target.hasAttribute && target.hasAttribute("data-drawer-overlay")) return true;
+    if (target.id === "drawerOverlay" || target.id === "tiOverlay") return true;
+    return false;
+  }
+
   function initDrawer() {
-    document.addEventListener("click", (ev) => {
-      if (ev.target.closest("[data-drawer-open]")) {
+    // Capture: no lo rompe stopPropagation de otros scripts
+    function handler(e) {
+      var t = e.target;
+      if (isOpenBtn(t)) {
+        e.preventDefault();
         openDrawer();
         return;
       }
-      if (ev.target.closest("[data-drawer-close]")) {
+      if (isCloseBtn(t) || isOverlay(t)) {
+        e.preventDefault();
         closeDrawer();
         return;
       }
-      if (ev.target === overlay()) {
-        closeDrawer();
-      }
-    });
+    }
 
-    document.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape") closeDrawer();
+    document.addEventListener("click", handler, true);
+    document.addEventListener("touchend", handler, true);
+
+    // Escape cierra
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeDrawer();
     });
   }
 
-  // =====================
-  // Clock (optional)
-  // =====================
+  // ---------------------------
+  // Clock (topbar)
+  // ---------------------------
   function initClock() {
-    const el = document.querySelector("[data-clock]");
+    var el = qs("[data-clock]");
     if (!el) return;
 
+    function pad(n) {
+      return String(n).padStart(2, "0");
+    }
+
     function tick() {
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, "0");
-      const mm = String(now.getMinutes()).padStart(2, "0");
-      const ss = String(now.getSeconds()).padStart(2, "0");
-      el.textContent = `${hh}:${mm}:${ss}`;
+      var d = new Date();
+      el.textContent = pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
     }
 
     tick();
-    window.setInterval(tick, 1000);
+    setInterval(tick, 1000);
   }
 
-  // =====================
-  // Password toggle (data-toggle-password)
-  // =====================
-  function initPasswordToggles() {
-    document.addEventListener("click", (ev) => {
-      const btn = ev.target.closest("[data-toggle-password]");
-      if (!btn) return;
+  // ---------------------------
+  // Progress bars
+  // ---------------------------
+  function initProgress() {
+    var els = qsa("[data-progress][data-value]");
+    if (!els.length) return;
 
-      const target = btn.getAttribute("data-target");
-      if (!target) return;
-
-      const input = document.querySelector(target);
-      if (!input) return;
-
-      const isPassword = input.getAttribute("type") === "password";
-      input.setAttribute("type", isPassword ? "text" : "password");
-      btn.textContent = isPassword ? "Ocultar" : "Mostrar";
+    els.forEach(function (el) {
+      var v = parseFloat(el.getAttribute("data-value") || "0");
+      if (isNaN(v)) v = 0;
+      if (v < 0) v = 0;
+      if (v > 100) v = 100;
+      el.style.width = v + "%";
     });
   }
 
+  // ---------------------------
   // Boot
+  // ---------------------------
   document.addEventListener("DOMContentLoaded", function () {
-    initTheme();
+    initThemeToggle();
     initDrawer();
     initClock();
-    initPasswordToggles();
+    initProgress();
   });
 })();

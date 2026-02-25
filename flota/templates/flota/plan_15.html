@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Plan 15 días | Flota{% endblock %}
+{% block page_title %}Plan 15 días{% endblock %}
+{% block page_subtitle %}Planificación quincenal (turnos rotativos){% endblock %}
+
+{% block content %}
+
+<section class="ti-card p-4 space-y-4">
+
+  <form method="get" class="space-y-3">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div>
+        <label class="text-xs ti-subtitle">Desde</label>
+        <input type="date" name="start" value="{{ start|date:'Y-m-d' }}" class="ti-input w-full" />
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button class="ti-btn-primary" type="submit">Ver 15 días</button>
+          <a class="ti-btn" href="{% url 'flota:plan_15_print' %}?start={{ start|date:'Y-m-d'|urlencode }}{% if q %}&q={{ q|urlencode }}{% endif %}" target="_blank" rel="noopener">Imprimir</a>
+          <a class="ti-btn" href="{% url 'flota:plan_15_export_csv' %}?start={{ start|date:'Y-m-d'|urlencode }}{% if q %}&q={{ q|urlencode }}{% endif %}">Exportar CSV</a>
+        </div>
+        <div class="mt-2 text-xs ti-subtitle">
+          Tip: para editar un día puntual, usá Horarios.
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs ti-subtitle">Buscar</label>
+        <input name="q" value="{{ q }}" class="ti-input w-full" placeholder="Unidad, chofer, sección, etiqueta..." />
+        <div class="mt-2 text-xs ti-subtitle">
+          Se filtra por unidad, chofer, sección, etiqueta y recorrido.
+        </div>
+      </div>
+    </div>
+  </form>
+
+
+<div class="flex flex-wrap gap-2">
+  <form method="post" action="{% url 'flota:plan_15_copiar_quincena_anterior' %}">
+    {% csrf_token %}
+    <input type="hidden" name="start" value="{{ start|date:'Y-m-d' }}" />
+    <button class="ti-btn" type="submit"
+            onclick="return confirm('Esto copiará la quincena anterior (+15 días) al rango actual. ¿Continuar?');">
+      Copiar quincena anterior
+    </button>
+  </form>
+</div>
+
+  <div class="space-y-3">
+    {% for item in days %}
+      <div class="ti-card p-0 overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-sm font-semibold">{{ item.day|date:"d/m/Y" }}</div>
+            <div class="text-xs ti-subtitle">
+              {{ item.salidas|length }} salidas ·
+              <a class="underline" href="{% url 'flota:salida_list' %}?fecha={{ item.day|date:'Y-m-d'|urlencode }}">abrir en Horarios</a>
+            </div>
+          </div>
+          <div class="shrink-0 flex items-center gap-2">
+            <a class="ti-btn" href="{% url 'flota:salida_diagrama_edit' %}?fecha={{ item.day|date:'Y-m-d'|urlencode }}">Editar diagrama</a>
+            <a class="ti-btn" href="{% url 'flota:salida_diagrama_print' %}?fecha={{ item.day|date:'Y-m-d'|urlencode }}" target="_blank" rel="noopener">Imprimir</a>
+          </div>
+        </div>
+
+        {% if item.salidas %}
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left">
+                  <th class="px-3 py-2">Hora</th>
+                  <th class="px-3 py-2">Unidad</th>
+                  <th class="px-3 py-2">Sección / Etiqueta</th>
+                  <th class="px-3 py-2">Regreso</th>
+                  <th class="px-3 py-2">Chofer</th>
+                  <th class="px-3 py-2">Recorrido</th>
+                  <th class="px-3 py-2">Alerta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in item.salidas %}
+                  <tr class="border-t border-slate-200 dark:border-slate-800">
+                    <td class="px-3 py-2 font-semibold">{{ s.salida_programada|date:"H:i" }}</td>
+                    <td class="px-3 py-2">
+                      <div class="font-semibold">Interno {{ s.colectivo.interno }}</div>
+                      <div class="text-xs ti-subtitle">{{ s.colectivo.dominio }}</div>
+                    </td>
+                    <td class="px-3 py-2">
+                      <div class="text-xs ti-subtitle">{{ s.seccion|default:"—" }}</div>
+                      <div class="font-semibold">{{ s.salida_label|default:"—" }}</div>
+                    </td>
+                    <td class="px-3 py-2">{{ s.regreso|default:"—" }}</td>
+                    <td class="px-3 py-2">{{ s.chofer|default:"—" }}</td>
+                    <td class="px-3 py-2">{{ s.recorrido|default:"—" }}</td>
+                    <td class="px-3 py-2">
+                      {% if s.parte_pk %}
+                        <a class="ti-badge-danger" href="{% url 'flota:parte_detail' s.parte_pk %}" target="_blank" rel="noopener">Revisar parte</a>
+                      {% else %}
+                        <span class="ti-badge-muted">OK</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="p-4 text-sm ti-subtitle">Sin salidas cargadas.</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+</section>
+
+{% endblock %}

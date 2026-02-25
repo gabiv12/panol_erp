@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Informe flota | Flota{% endblock %}
+{% block page_title %}Informe de flota{% endblock %}
+{% block page_subtitle %}Estado general de unidades, salidas próximas y carga por chofer{% endblock %}
+
+{% block content %}
+
+<div class="space-y-4">
+
+  <section class="ti-card p-4 space-y-3">
+    <form method="get" class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div>
+        <label class="text-xs ti-subtitle">Fecha (para carga por chofer)</label>
+        <input type="date" name="fecha" value="{{ fecha|date:'Y-m-d' }}" class="ti-input w-full" />
+      </div>
+      <div>
+        <label class="text-xs ti-subtitle">Ventana de salidas próximas (horas)</label>
+        <input type="number" min="1" max="48" name="hours" value="{{ hours }}" class="ti-input w-full" />
+      </div>
+      <div class="flex items-end gap-2">
+        <button class="ti-btn-primary" type="submit">Actualizar</button>
+        <a class="ti-btn" href="{% url 'flota:tv_horarios' %}" target="_blank" rel="noopener">Pantalla TV Horarios</a>
+        <a class="ti-btn" href="{% url 'flota:tv_taller' %}" target="_blank" rel="noopener">Pantalla TV Taller</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+    <div class="ti-card p-4">
+      <div class="text-xs ti-subtitle">Salidas próximas</div>
+      <div class="text-2xl font-semibold">{{ salidas_proximas|length }}</div>
+      <div class="text-xs ti-subtitle mt-1">Próximas {{ hours }} horas</div>
+    </div>
+    <div class="ti-card p-4">
+      <div class="text-xs ti-subtitle">Choferes con salidas</div>
+      <div class="text-2xl font-semibold">{{ carga_chofer|length }}</div>
+      <div class="text-xs ti-subtitle mt-1">En la fecha seleccionada</div>
+    </div>
+    <div class="ti-card p-4">
+      <div class="text-xs ti-subtitle">Unidades activas</div>
+      <div class="text-2xl font-semibold">{{ rows|length }}</div>
+      <div class="text-xs ti-subtitle mt-1">Incluye alertas por partes y vencimientos</div>
+    </div>
+  </section>
+
+  <section class="ti-card p-0 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+      <div class="text-sm font-semibold">Salidas próximas</div>
+      <div class="text-xs ti-subtitle">Sirve para ordenar prioridades del taller.</div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left">
+            <th class="px-3 py-2">Hora</th>
+            <th class="px-3 py-2">Unidad</th>
+            <th class="px-3 py-2">Etiqueta</th>
+            <th class="px-3 py-2">Chofer</th>
+            <th class="px-3 py-2">Recorrido</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in salidas_proximas %}
+            <tr class="border-t border-slate-200 dark:border-slate-800">
+              <td class="px-3 py-2 font-semibold">{{ s.salida_programada|date:"H:i" }}</td>
+              <td class="px-3 py-2">
+                <div class="font-semibold">Int {{ s.colectivo.interno }}</div>
+                <div class="text-xs ti-subtitle">{{ s.colectivo.dominio }}</div>
+              </td>
+              <td class="px-3 py-2">{{ s.salida_label|default:"—" }}</td>
+              <td class="px-3 py-2">{{ s.chofer|default:"—" }}</td>
+              <td class="px-3 py-2">{{ s.recorrido|default:"—" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="px-3 py-6 text-center ti-subtitle" colspan="5">No hay salidas en la ventana.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+
+    <div class="ti-card p-0 overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+        <div class="text-sm font-semibold">Unidades</div>
+        <div class="text-xs ti-subtitle">Alerta por partes abiertos y vencimientos próximos.</div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left">
+              <th class="px-3 py-2">Unidad</th>
+              <th class="px-3 py-2">Próxima salida</th>
+              <th class="px-3 py-2">Partes</th>
+              <th class="px-3 py-2">VTV</th>
+              <th class="px-3 py-2">Matafuego</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+              <tr class="border-t border-slate-200 dark:border-slate-800">
+                <td class="px-3 py-2">
+                  <div class="font-semibold">Int {{ r.unidad.interno }}</div>
+                  <div class="text-xs ti-subtitle">{{ r.unidad.dominio }}</div>
+                </td>
+                <td class="px-3 py-2">
+                  {% if r.next_salida %}
+                    <span class="font-semibold">{{ r.next_salida|date:"d/m H:i" }}</span>
+                  {% else %}
+                    <span class="ti-subtitle">—</span>
+                  {% endif %}
+                </td>
+                <td class="px-3 py-2">
+                  {% if r.partes_cant %}
+                    <span class="ti-badge-danger">{{ r.partes_cant }}</span>
+                  {% else %}
+                    <span class="ti-badge-muted">0</span>
+                  {% endif %}
+                </td>
+                <td class="px-3 py-2">
+                  {% if r.vtv_dias != None %}
+                    {{ r.vtv_dias }}d
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td class="px-3 py-2">
+                  {% if r.matafuego_dias != None %}
+                    {{ r.matafuego_dias }}d
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="ti-card p-0 overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800">
+        <div class="text-sm font-semibold">Carga por chofer</div>
+        <div class="text-xs ti-subtitle">Cantidad de salidas en la fecha seleccionada.</div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left">
+              <th class="px-3 py-2">Chofer</th>
+              <th class="px-3 py-2">Salidas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in carga_chofer %}
+              <tr class="border-t border-slate-200 dark:border-slate-800">
+                <td class="px-3 py-2 font-semibold">{{ c.chofer }}</td>
+                <td class="px-3 py-2">{{ c.salidas }}</td>
+              </tr>
+            {% empty %}
+              <tr><td class="px-3 py-6 text-center ti-subtitle" colspan="2">Sin datos.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar salida | Flota{% endblock %}
+{% block page_title %}Eliminar salida{% endblock %}
+{% block page_subtitle %}Confirmación{% endblock %}
+
+{% block content %}
+<section class="ti-card p-4 space-y-3">
+  <div class="text-sm">Se eliminará la salida programada de la unidad <span class="font-semibold">{{ object.colectivo.interno }} · {{ object.colectivo.dominio }}</span> a las <span class="font-semibold">{{ object.salida_programada|date:"H:i" }}</span>.</div>
+
+  <form method="post" class="flex items-center justify-end gap-2">
+    {% csrf_token %}
+    <a class="ti-btn" href="{% url 'flota:salida_list' %}">Cancelar</a>
+    <button class="ti-btn-primary" type="submit">Eliminar</button>
+  </form>
+</section>
+{% endblock %}

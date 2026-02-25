@@ -1,0 +1,55 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plan 15 días</title>
+  <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
+  <style>
+    @media print { .no-print { display:none !important; } }
+  </style>
+</head>
+<body class="bg-white text-black">
+  <div class="p-4 no-print">
+    <button onclick="window.print()" class="ti-btn">Imprimir</button>
+  </div>
+
+  <div class="p-4 space-y-4">
+    <div class="text-lg font-semibold">Plan 15 días</div>
+    <div class="text-sm">Desde: {{ start|date:"d/m/Y" }}</div>
+
+    {% for item in days %}
+      <div class="border border-slate-300 rounded-xl overflow-hidden">
+        <div class="px-3 py-2 bg-slate-100 font-semibold">{{ item.day|date:"d/m/Y" }} ({{ item.salidas|length }} salidas)</div>
+        {% if item.salidas %}
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left">
+                <th class="px-2 py-1">Hora</th>
+                <th class="px-2 py-1">Unidad</th>
+                <th class="px-2 py-1">Etiqueta</th>
+                <th class="px-2 py-1">Chofer</th>
+                <th class="px-2 py-1">Recorrido</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in item.salidas %}
+                <tr class="border-t border-slate-200">
+                  <td class="px-2 py-1 font-semibold">{{ s.salida_programada|date:"H:i" }}</td>
+                  <td class="px-2 py-1">Int {{ s.colectivo.interno }} ({{ s.colectivo.dominio }})</td>
+                  <td class="px-2 py-1">{{ s.salida_label|default:"—" }}</td>
+                  <td class="px-2 py-1">{{ s.chofer|default:"—" }}</td>
+                  <td class="px-2 py-1">{{ s.recorrido|default:"—" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="px-3 py-3 text-sm text-slate-600">Sin salidas.</div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

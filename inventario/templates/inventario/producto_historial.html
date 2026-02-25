@@ -10,10 +10,18 @@
     </div>
     <div class="flex gap-2">
       <a href="{% url 'inventario:producto_list' %}" class="ti-btn">Volver</a>
+      <a href="{% url 'inventario:movimiento_create' %}?tipo=INGRESO&producto={{ object.id }}" class="ti-btn">Nueva entrada</a>
+      <a href="{% url 'inventario:movimiento_create' %}?tipo=EGRESO&producto={{ object.id }}" class="ti-btn">Nueva salida</a>
+      <a href="{% url 'inventario:movimiento_create' %}?producto={{ object.id }}" class="ti-btn">Nuevo movimiento</a>
       {% if perms.inventario.change_producto %}
         <a href="{% url 'inventario:producto_update' object.id %}" class="ti-btn">Editar</a>
       {% endif %}
-      <a href="{% url 'inventario:producto_etiquetas' %}?q={{ object.codigo|urlencode }}" class="ti-btn">Etiqueta</a>
+
+      {% if reportlab_ok %}
+        <a href="{% url 'inventario:producto_etiquetas' %}?q={{ object.codigo|urlencode }}" class="ti-btn">Etiqueta</a>
+      {% else %}
+        <span class="ti-btn opacity-50 cursor-not-allowed" title="Falta el paquete 'reportlab'.">Etiqueta</span>
+      {% endif %}
     </div>
   </div>
 

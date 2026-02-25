@@ -5,6 +5,36 @@
 @layer base {
   html { color-scheme: light; }
   html.dark { color-scheme: dark; }
+
+  /* AUTO_BASE_FORM_CONTROLS: inputs legibles aun sin clases (light/dark) */
+  input[type="text"],
+  input[type="number"],
+  input[type="search"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  select,
+  textarea {
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2
+           text-slate-900 placeholder:text-slate-500
+           focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400
+           dark:border-slate-700 dark:bg-slate-900
+           dark:text-slate-100 dark:placeholder:text-slate-400
+           dark:focus:ring-slate-100/15 dark:focus:border-slate-500;
+  }
+
+  input[type="checkbox"] {
+    @apply h-5 w-5 rounded border-slate-300 text-slate-900
+           focus:ring-2 focus:ring-slate-900/20
+           dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100;
+  }
+
+  input[type="file"] {
+    @apply block w-full text-sm text-slate-700 dark:text-slate-200
+           file:mr-3 file:rounded-lg file:border-0
+           file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white
+           dark:file:bg-white dark:file:text-slate-900;
+  }
 }
 
 @layer components {
@@ -118,3 +148,4 @@
   /* Separadores / divisores suaves */
   .ti-divider { @apply border-t border-slate-200 dark:border-slate-800; }
 }
+

@@ -1,0 +1,97 @@
+﻿from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase
+from django.urls import reverse
+
+from adjuntos.models import ProductoImagen
+from inventario.models import (
+    Categoria,
+    Subcategoria,
+    UnidadMedida,
+    Proveedor,
+    Ubicacion,
+    Producto,
+)
+
+
+class InventarioViewsSmokeTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        User = get_user_model()
+        cls.user = User.objects.create_user(username="user_a", password="pass1234")
+
+        cls.cat = Categoria.objects.create(nombre="Cat A")
+        cls.sub = Subcategoria.objects.create(nombre="Sub A", categoria=cls.cat)
+        cls.um = UnidadMedida.objects.create(nombre="Unidad", abreviatura="u")
+
+        cls.prov = Proveedor.objects.create(nombre="Prov A")
+        cls.ubi = Ubicacion.objects.create(nombre="Depósito", referencia="DEP-A")
+
+        cls.prod = Producto.objects.create(
+            nombre="Producto A",
+            codigo_interno="P-001",
+            categoria=cls.cat,
+            subcategoria=cls.sub,
+            unidad_medida=cls.um,
+            proveedor=cls.prov,
+            ubicacion_default=cls.ubi,
+            is_active=True,
+        )
+
+    def setUp(self):
+        self.client.login(username="user_a", password="pass1234")
+
+    def test_movimiento_list_loads(self):
+        url = reverse("inventario:movimiento_list")
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_movimiento_create_loads(self):
+        url = reverse("inventario:movimiento_create")
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_product_update_loads(self):
+        url = reverse("inventario:producto_update", args=[self.prod.id])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_product_historial_loads(self):
+        url = reverse("inventario:producto_historial", args=[self.prod.id])
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_product_update_can_add_image_and_historial_lists_it(self):
+        url_update = reverse("inventario:producto_update", args=[self.prod.id])
+
+        img = SimpleUploadedFile(
+            "test.png",
+            b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR" + b"\x00" * 32,
+            content_type="image/png",
+        )
+
+        resp = self.client.post(
+            url_update,
+            data={
+                "nombre": self.prod.nombre,
+                "codigo_interno": self.prod.codigo_interno,
+                "categoria": self.cat.id,
+                "subcategoria": self.sub.id,
+                "unidad_medida": self.um.id,
+                "proveedor": self.prov.id,
+                "ubicacion_default": self.ubi.id,
+                "is_active": "on",
+            },
+            files={"imagenes": [img]},
+            follow=True,
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertGreaterEqual(
+            ProductoImagen.objects.filter(producto=self.prod).count(),
+            1,
+        )
+
+        url_hist = reverse("inventario:producto_historial", args=[self.prod.id])
+        resp2 = self.client.get(url_hist)
+        self.assertEqual(resp2.status_code, 200)

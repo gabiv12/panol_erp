@@ -1,7 +1,7 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% load static %}
 
-{% block title %}Iniciar sesión | Pañol ERP{% endblock %}
+{% block title %}Iniciar sesión | La Termal ERP{% endblock %}
 {% block page_title %}Iniciar sesión{% endblock %}
 {% block page_subtitle %}Acceso al sistema{% endblock %}
 
@@ -9,7 +9,17 @@
 <div class="min-h-[calc(100dvh-140px)] flex items-center justify-center py-10">
   <div class="w-full max-w-md">
     <div class="ti-card p-6">
-      <div class="mb-6">
+
+      <div class="mb-6 text-center">
+        <div class="flex justify-center mb-3">
+          <div class="relative h-16 w-16">
+            <img src="{% static 'img/fondo_blanco.svg' %}" alt="La Termal ERP"
+                 class="h-16 w-16 rounded-full bg-white p-1 dark:hidden" />
+            <img src="{% static 'img/fondo_oscuro.svg' %}" alt="La Termal ERP"
+                 class="h-16 w-16 rounded-full bg-transparent p-0 hidden dark:block" />
+          </div>
+        </div>
+
         <h1 class="text-2xl font-semibold">Iniciar sesión</h1>
         <p class="mt-1 text-sm ti-subtitle">Accedé con tu usuario y contraseña.</p>
       </div>
@@ -25,7 +35,7 @@
 
         <div>
           <label for="username" class="ti-label mb-1">Usuario</label>
-          <input id="username" name="username" class="ti-input" required />
+          <input id="username" name="username" class="ti-input w-full" required />
         </div>
 
         <div>
@@ -38,13 +48,14 @@
               Mostrar
             </button>
           </div>
-          <input id="password" name="password" type="password" class="ti-input" required />
+          <input id="password" name="password" type="password" class="ti-input w-full" required />
         </div>
 
         <button class="ti-btn-primary w-full py-2.5" type="submit">
           Entrar
         </button>
       </form>
+
     </div>
   </div>
 </div>

@@ -9,10 +9,11 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import transaction
 from django.db.models import F, Sum
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_GET
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 
 # ReportLab (opcional): si falta, el sistema igual levanta y solo falla el endpoint de etiquetas
@@ -108,7 +109,7 @@ class SimpleDeleteView(LoginRequiredMixin, PermissionRequiredMixin, SimpleContex
 
 
 # -----------------------------
-# Categorï¿½as
+# Categorías
 # -----------------------------
 class CategoriaListView(SimpleListView):
     model = Categoria
@@ -152,13 +153,13 @@ class CategoriaDeleteView(SimpleDeleteView):
 
 
 # -----------------------------
-# Subcategoróas
+# Subcategorías
 # -----------------------------
 class SubcategoriaListView(SimpleListView):
     model = Subcategoria
     permission_required = "inventario.view_subcategoria"
-    title = "Subcategoróas"
-    subtitle = "Clasificaciï¿½n secundaria dentro de una categoría."
+    title = "Subcategorías"
+    subtitle = "Clasificación secundaria dentro de una categoría."
     active_tab = "config"
     create_url_name = "inventario:subcategoria_create"
     update_url_name = "inventario:subcategoria_update"
@@ -171,7 +172,7 @@ class SubcategoriaCreateView(SimpleCreateView):
     form_class = SubcategoriaForm
     permission_required = "inventario.add_subcategoria"
     title = "Nueva subcategoría"
-    subtitle = "Crear una subcategoría asociadaía una categoría."
+    subtitle = "Crear una subcategoría asociada a una categoría."
     active_tab = "config"
     list_url_name = "inventario:subcategoria_list"
 
@@ -259,7 +260,7 @@ class UbicacionCreateView(SimpleCreateView):
     form_class = UbicacionForm
     permission_required = "inventario.add_ubicacion"
     title = "Nueva ubicación"
-    subtitle = "Crear ubicación fósica de almacenamiento."
+    subtitle = "Crear ubicación física de almacenamiento."
     active_tab = "config"
     list_url_name = "inventario:ubicacion_list"
 
@@ -290,7 +291,7 @@ class ProveedorListView(SimpleListView):
     model = Proveedor
     permission_required = "inventario.view_proveedor"
     title = "Proveedores"
-    subtitle = "Datos bósicos de proveedores."
+    subtitle = "Datos básicos de proveedores."
     active_tab = "config"
     create_url_name = "inventario:proveedor_create"
     update_url_name = "inventario:proveedor_update"
@@ -351,6 +352,7 @@ class ProductoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx["filterset"] = self.filterset
         ctx["active_tab"] = "productos"
+        ctx["reportlab_ok"] = REPORTLAB_OK
         return ctx
 
 
@@ -456,6 +458,7 @@ class ProductoHistorialView(LoginRequiredMixin, PermissionRequiredMixin, DetailV
         ctx["stocks"] = stocks
         ctx["active_tab"] = "productos"
         ctx["imagenes"] = self.object.imagenes.all()
+        ctx["reportlab_ok"] = REPORTLAB_OK
         return ctx
 
 
@@ -519,7 +522,7 @@ class StockActualListView(LoginRequiredMixin, PermissionRequiredMixin, ListView)
         self.filterset = StockActualFilter(self.request.GET, queryset=qs)
         qs = self.filterset.qs
 
-        # Low stock toggle: ólow=1
+        # Low stock toggle: low=1
         if self.request.GET.get("low") in ("1", "true", "True", "on"):
             qs = qs.filter(cantidad__lt=F("producto__stock_minimo"))
 
@@ -700,8 +703,10 @@ class MovimientoStockUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Upd
                 # Aplica el ajuste (delta) al stock
                 stock_service.aplicar_movimiento_actualizado(old, self.object)
 
+                messages.success(self.request, "Movimiento actualizado correctamente.")
                 return response
         except ValueError as e:
+            messages.error(self.request, str(e))
             form.add_error(None, str(e))
             return self.form_invalid(form)
 
@@ -724,14 +729,55 @@ class MovimientoStockDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Del
                 obj = MovimientoStock.objects.select_for_update().get(pk=self.object.pk)
                 stock_service.aplicar_movimiento_eliminado(obj)
                 obj.delete()
+            messages.success(request, "Movimiento eliminado correctamente.")
             return redirect(self.success_url)
         except ValueError as e:
             messages.error(request, str(e))
             return redirect(self.success_url)
 
 
+
+
+# -----------------------------
+# API mínima (offline): stock por ubicación para UI de movimientos
+# -----------------------------
+@login_required
+@permission_required("inventario.can_manage_stock", raise_exception=True)
+@require_GET
+def stock_por_ubicacion_json(request):
+    """Devuelve stock por ubicación de un producto.
+
+    Uso: UI de "Nuevo movimiento" (filtra ubicaciones origen y muestra "Stock / Quedará").
+
+    Respuesta:
+      { ok: true, stocks: [ {ubicacion_id, ubicacion, cantidad}, ... ] }
+    """
+
+    raw = (request.GET.get("producto_id") or "").strip()
+    try:
+        producto_id = int(raw)
+    except Exception:
+        return JsonResponse({"ok": False, "error": "producto_id inválido"}, status=400)
+
+    qs = (
+        StockActual.objects.filter(producto_id=producto_id, ubicacion__is_active=True)
+        .select_related("ubicacion")
+        .order_by("ubicacion__codigo")
+    )
+
+    stocks = [
+        {
+            "ubicacion_id": s.ubicacion_id,
+            "ubicacion": getattr(s.ubicacion, "codigo", str(s.ubicacion_id)),
+            "cantidad": str(s.cantidad),
+        }
+        for s in qs
+    ]
+
+    return JsonResponse({"ok": True, "stocks": stocks})
+
 #-------------------------------
-# INVIENTARIO PDF
+# INVENTARIO PDF
 #-----------------------------
 @login_required
 @permission_required("inventario.view_producto", raise_exception=True)

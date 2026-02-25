@@ -19,6 +19,9 @@ urlpatterns = [
     # Stock
     path("stock/", views.StockActualListView.as_view(), name="stock_list"),
 
+    # API (offline)
+    path("api/stock-por-ubicacion/", views.stock_por_ubicacion_json, name="api_stock_por_ubicacion"),
+
     # Movimientos
     path("movimientos/", views.MovimientoStockListView.as_view(), name="movimiento_list"),
     path("movimientos/nuevo/", views.MovimientoStockCreateView.as_view(), name="movimiento_create"),

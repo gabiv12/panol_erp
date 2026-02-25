@@ -26,6 +26,11 @@
    href="{% url 'flota:parte_create' %}?colectivo={{ c.id }}&next={{ request.get_full_path|urlencode }}">
   Nuevo parte
 </a>
+
+      {% if can_view_inv %}
+        <a class="ti-btn" href="{% url 'inventario:movimiento_create' %}?colectivo={{ c.id }}&force=1&next={{ request.get_full_path|urlencode }}">Nuevo movimiento</a>
+      {% endif %}
+
     </div>
   </section>
 

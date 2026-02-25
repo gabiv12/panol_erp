@@ -2,12 +2,24 @@
 
 {% block title %}Nuevo parte | Flota{% endblock %}
 {% block page_title %}Nuevo parte diario{% endblock %}
-{% block page_subtitle %}Registrá incidencias, mantenimiento, checklist o auxilios.{% endblock %}
+{% block page_subtitle %}Cargá lo mínimo (unidad + tipo + descripción). El resto es opcional según el caso.{% endblock %}
 
 {% block content %}
 <div class="space-y-4">
 
   <section class="ti-card p-4">
+
+    <div class="ti-card p-3 mb-3">
+      <div class="text-sm font-semibold">Guía rápida</div>
+      <ul class="mt-2 text-sm list-disc pl-5 space-y-1">
+        <li><span class="font-semibold">Unidad</span>: elegí el interno correcto.</li>
+        <li><span class="font-semibold">Tipo</span>: Incidencia / Control / Mantenimiento / Auxilio.</li>
+        <li><span class="font-semibold">Descripción</span>: qué pasó + dónde + qué se hizo.</li>
+        <li>Si es <span class="font-semibold">Auxilio</span>, cargá inicio/fin. Si es <span class="font-semibold">Mantenimiento</span>, completá el bloque.</li>
+      </ul>
+      <div class="text-xs ti-subtitle mt-2">Después de guardar, podés adjuntar fotos/boletas y, si corresponde, registrar movimiento de inventario.</div>
+    </div>
+
     <form method="post" class="space-y-3">
       {% csrf_token %}
 
@@ -104,9 +116,15 @@
 
       <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
 
-      <div class="flex gap-2">
-        <button class="ti-btn-primary" type="submit">Guardar</button>
-        <a class="ti-btn" href="{{ request.GET.next|default:'#' }}">Cancelar</a>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button class="ti-btn-primary w-full sm:w-auto" type="submit">Guardar</button>
+        {% with cancel_url=request.GET.next|default:'' %}
+          {% if cancel_url %}
+            <a class="ti-btn w-full sm:w-auto text-center" href="{{ cancel_url }}">Cancelar</a>
+          {% else %}
+            <a class="ti-btn w-full sm:w-auto text-center" href="{% url 'flota:parte_list' %}">Cancelar</a>
+          {% endif %}
+        {% endwith %}
       </div>
 
     </form>

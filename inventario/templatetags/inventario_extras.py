@@ -7,6 +7,26 @@ from django.utils.formats import number_format
 
 register = template.Library()
 
+from django.http import QueryDict
+
+@register.simple_tag(takes_context=True)
+def qs_replace(context, **kwargs):
+    """Reemplaza/agrega parámetros de querystring preservando el resto.
+
+    Para eliminar un parámetro, pasá valor vacío ("") o None.
+    """
+    request = context.get("request")
+    if not request:
+        return ""
+    qd = request.GET.copy()
+    for k, v in kwargs.items():
+        if v is None or v == "":
+            if k in qd:
+                qd.pop(k)
+        else:
+            qd[k] = str(v)
+    return qd.urlencode()
+
 
 @register.filter
 def qty(value, unidad=None) -> str:

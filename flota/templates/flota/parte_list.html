@@ -1,20 +1,104 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Partes diarios | Flota{% endblock %}
 {% block page_title %}Partes diarios{% endblock %}
-{% block page_subtitle %}Incidencias, checklist, mantenimiento y auxilios.{% endblock %}
+{% block page_subtitle %}Registro operativo para incidencias, controles y auxilios (pensado para celular).{% endblock %}
 
 {% block content %}
 <div class="space-y-4">
 
   <section class="ti-card p-4">
-    <form method="get" class="grid grid-cols-1 lg:grid-cols-6 gap-2 items-end">
-      <div class="lg:col-span-2">
-        <label class="text-xs ti-subtitle">Buscar</label>
-        <input class="ti-input w-full" name="q" value="{{ q }}" placeholder="Interno, dominio, texto…">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold">Crear y consultar partes</div>
+        <div class="text-xs ti-subtitle">
+          {% if colectivo_selected %}
+            Unidad: <span class="font-semibold tabular-nums">{{ colectivo_selected.interno }}</span> · {{ colectivo_selected.dominio|default:"—" }}
+          {% else %}
+            Unidad: <span class="font-semibold">Todas</span>
+          {% endif %}
+          · Período: últimos <span class="font-semibold tabular-nums">{{ days }}</span> días
+          · Referencia: <span class="font-semibold">PD-&lt;id&gt;</span>
+        </div>
       </div>
 
+      <div class="flex flex-col sm:flex-row gap-2">
+        <a class="ti-btn" href="{% url 'flota:parte_list' %}">Ver todos</a>
+        <a class="ti-btn-primary" href="{% url 'flota:parte_create' %}{% if colectivo_id %}?colectivo={{ colectivo_id }}{% elif colectivo %}?colectivo={{ colectivo }}{% endif %}">Nuevo parte</a>
+      </div>
+    </div>
+
+    <div class="mt-3 ti-card p-3">
+      <div class="text-sm font-semibold">Consejos rápidos</div>
+      <div class="text-xs ti-subtitle mt-1">Leé esto antes de cargar. Te ahorra tiempo y evita errores.</div>
+      <ul class="mt-3 space-y-2 text-sm">
+        <li class="flex gap-2"><span class="ti-badge-muted">1</span><div><span class="font-semibold">Qué pasó + dónde + cuándo.</span> Ej: “Se cortó manguera en línea X. Se detuvo en parada Y”.</div></li>
+        <li class="flex gap-2"><span class="ti-badge-muted">2</span><div><span class="font-semibold">Adjuntá una foto</span> si hay evidencia. Ayuda a cerrar el caso rápido.</div></li>
+        <li class="flex gap-2"><span class="ti-badge-muted">3</span><div><span class="font-semibold">Si se usó repuesto</span>, registralo desde el detalle del parte en “Movimiento (inventario)”.</div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-2 lg:grid-cols-8 gap-2">
+    <div class="ti-card p-3 lg:col-span-2">
+      <div class="text-xs ti-subtitle">Total</div>
+      <div class="text-xl font-semibold tabular-nums">{{ stats.total|default:0 }}</div>
+      <div class="text-xs ti-subtitle">últ. {{ days }} días</div>
+    </div>
+    <div class="ti-card p-3"><div class="text-xs ti-subtitle">Abiertos</div><div class="text-xl font-semibold tabular-nums">{{ stats.abiertos|default:0 }}</div></div>
+    <div class="ti-card p-3"><div class="text-xs ti-subtitle">En proceso</div><div class="text-xl font-semibold tabular-nums">{{ stats.en_proceso|default:0 }}</div></div>
+    <div class="ti-card p-3"><div class="text-xs ti-subtitle">Resueltos</div><div class="text-xl font-semibold tabular-nums">{{ stats.resueltos|default:0 }}</div></div>
+    <div class="ti-card p-3"><div class="text-xs ti-subtitle">Incidencias</div><div class="text-xl font-semibold tabular-nums">{{ stats.incidencias|default:0 }}</div></div>
+    <div class="ti-card p-3"><div class="text-xs ti-subtitle">Controles</div><div class="text-xl font-semibold tabular-nums">{{ stats.controles|default:0 }}</div></div>
+    <div class="ti-card p-3"><div class="text-xs ti-subtitle">Mantenim.</div><div class="text-xl font-semibold tabular-nums">{{ stats.mantenimientos|default:0 }}</div></div>
+    <div class="ti-card p-3"><div class="text-xs ti-subtitle">Auxilios</div><div class="text-xl font-semibold tabular-nums">{{ stats.auxilios|default:0 }}</div></div>
+  </section>
+
+  {% if colectivos_quick %}
+    <section class="ti-card p-4">
       <div>
+        <div class="text-sm font-semibold">Unidades</div>
+        <div class="text-xs ti-subtitle">Tocá una unidad para filtrar. Usá “Ver todos” para limpiar.</div>
+      </div>
+      <div class="mt-3 overflow-x-auto">
+        <div class="flex gap-2 w-max">
+          {% for c in colectivos_quick %}
+            <a class="ti-btn flex flex-col items-start leading-tight" href="{% url 'flota:parte_list' %}?colectivo={{ c.id }}&days={{ days }}">
+              <span class="text-base font-semibold tabular-nums leading-4">{{ c.interno }}</span>
+              <span class="text-[11px] ti-subtitle leading-4">{{ c.dominio|default:"—" }}</span>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="ti-card p-4">
+    <form method="get" class="grid grid-cols-1 lg:grid-cols-12 gap-2 items-end">
+      <div class="lg:col-span-3">
+        <label class="text-xs ti-subtitle">Buscar</label>
+        <input class="ti-input w-full" name="q" value="{{ q }}" placeholder="Interno, dominio o texto…">
+      </div>
+
+      <div class="lg:col-span-3">
+        <label class="text-xs ti-subtitle">Unidad</label>
+        {% if colectivo_id %}
+          <input type="hidden" name="colectivo" value="{{ colectivo_id }}">
+          <div class="ti-input w-full flex items-center justify-between">
+            <span class="text-sm">{{ colectivo_selected.interno }}{% if colectivo_selected.dominio %} · {{ colectivo_selected.dominio }}{% endif %}</span>
+            <span class="text-xs ti-subtitle">fijo</span>
+          </div>
+        {% else %}
+          <select class="ti-input w-full" name="colectivo">
+            <option value="">Todas</option>
+            {% for c in colectivos %}
+              <option value="{{ c.id }}" {% if colectivo|add:"" == c.id|add:"" %}selected{% endif %}>{{ c.interno }}{% if c.dominio %} · {{ c.dominio }}{% endif %}</option>
+            {% endfor %}
+          </select>
+        {% endif %}
+      </div>
+
+      <div class="lg:col-span-2">
         <label class="text-xs ti-subtitle">Tipo</label>
         <select class="ti-input w-full" name="tipo">
           <option value="">Todos</option>
@@ -24,7 +108,7 @@
         </select>
       </div>
 
-      <div>
+      <div class="lg:col-span-2">
         <label class="text-xs ti-subtitle">Estado</label>
         <select class="ti-input w-full" name="estado">
           <option value="">Todos</option>
@@ -34,20 +118,59 @@
         </select>
       </div>
 
-      <div>
+      <div class="lg:col-span-1">
         <label class="text-xs ti-subtitle">Días</label>
         <input class="ti-input w-full" name="days" value="{{ days }}" type="number" min="1" max="365">
       </div>
 
-      <div class="flex gap-2">
-        <button class="ti-btn-primary" type="submit">Filtrar</button>
-        <a class="ti-btn" href="{% url 'flota:parte_create' %}{% if colectivo_id %}?colectivo={{ colectivo_id }}{% endif %}">Nuevo</a>
+      <div class="lg:col-span-1 flex gap-2">
+        <button class="ti-btn-primary w-full" type="submit">Filtrar</button>
+      </div>
+
+      <div class="lg:col-span-12 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between mt-2">
+        <div class="text-xs ti-subtitle">Mostrando: <span class="font-semibold tabular-nums">{{ stats.total|default:0 }}</span> resultados</div>
+        <a class="ti-btn" href="{% url 'flota:parte_list' %}">Limpiar filtros</a>
       </div>
     </form>
   </section>
 
   <section class="ti-card p-0 overflow-hidden">
-    <div class="overflow-x-auto">
+
+    <div class="sm:hidden divide-y divide-slate-200 dark:divide-slate-800">
+      {% for it in items %}
+        <div class="p-4">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-xs ti-subtitle">{{ it.fecha_evento|date:"d/m/Y H:i" }} · Ref: PD-{{ it.id }}</div>
+              <div class="mt-1">
+                <div class="text-[11px] ti-subtitle">Unidad</div>
+                <div class="text-lg font-semibold tabular-nums leading-5">{{ it.colectivo.interno }}</div>
+                <div class="text-xs ti-subtitle">{{ it.colectivo.dominio|default:"-" }}</div>
+              </div>
+            </div>
+            <a class="ti-btn" href="{% url 'flota:parte_detail' it.id %}">Ver</a>
+          </div>
+
+          <div class="mt-2 flex flex-wrap gap-2 text-xs">
+            <span class="ti-badge-muted">{{ it.get_tipo_display }}</span>
+            <span class="ti-badge-muted">{{ it.get_estado_display }}</span>
+            <span class="ti-badge-muted">{{ it.get_severidad_display }}</span>
+            {% if it.odometro_km %}<span class="ti-badge-muted">{{ it.odometro_km }} km</span>{% endif %}
+          </div>
+
+          {% if it.resumen %}
+            <div class="mt-2 text-sm">{{ it.resumen }}</div>
+          {% endif %}
+        </div>
+      {% empty %}
+        <div class="p-6">
+          <div class="text-sm font-semibold">Sin partes en el período.</div>
+          <div class="text-xs ti-subtitle mt-1">Tocá “Nuevo parte” para registrar uno. Si querés ver otros días, aumentá el filtro “Días”.</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="hidden sm:block overflow-x-auto">
       <table class="ti-table">
         <thead class="ti-thead">
           <tr>
@@ -55,6 +178,7 @@
             <th class="ti-th">Unidad</th>
             <th class="ti-th">Tipo</th>
             <th class="ti-th">Estado</th>
+            <th class="ti-th">Severidad</th>
             <th class="ti-th">Resumen</th>
             <th class="ti-th text-right">Acción</th>
           </tr>
@@ -62,22 +186,19 @@
         <tbody>
           {% for it in items %}
             <tr class="ti-tr">
-              <td class="ti-td text-xs tabular-nums">{{ it.fecha_evento|date:"d/m/Y H:i" }}</td>
+              <td class="ti-td text-xs tabular-nums">{{ it.fecha_evento|date:"d/m/Y H:i" }}<div class="text-[11px] ti-subtitle">PD-{{ it.id }}</div></td>
               <td class="ti-td">
                 <div class="font-semibold tabular-nums">{{ it.colectivo.interno }}</div>
                 <div class="text-xs ti-subtitle">{{ it.colectivo.dominio|default:"—" }}</div>
               </td>
               <td class="ti-td">{{ it.get_tipo_display }}</td>
               <td class="ti-td">{{ it.get_estado_display }}</td>
+              <td class="ti-td">{{ it.get_severidad_display }}</td>
               <td class="ti-td text-xs">{{ it.resumen }}</td>
-              <td class="ti-td text-right">
-                <a class="ti-btn" href="{% url 'flota:parte_detail' it.id %}">Ver</a>
-              </td>
+              <td class="ti-td text-right"><a class="ti-btn" href="{% url 'flota:parte_detail' it.id %}">Ver</a></td>
             </tr>
           {% empty %}
-            <tr class="ti-tr">
-              <td class="ti-td" colspan="6"><div class="text-xs ti-subtitle">Sin partes en el período.</div></td>
-            </tr>
+            <tr class="ti-tr"><td class="ti-td" colspan="7"><div class="text-xs ti-subtitle">Sin partes en el período.</div></td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -88,15 +209,20 @@
         <div class="text-xs ti-subtitle">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</div>
         <div class="flex gap-2">
           {% if page_obj.has_previous %}
-            <a class="ti-btn" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&tipo={{ tipo }}&estado={{ estado }}&days={{ days }}">Anterior</a>
+            <a class="ti-btn" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&colectivo={{ colectivo }}&tipo={{ tipo }}&estado={{ estado }}&days={{ days }}">Anterior</a>
           {% endif %}
           {% if page_obj.has_next %}
-            <a class="ti-btn" href="?page={{ page_obj.next_page_number }}&q={{ q }}&tipo={{ tipo }}&estado={{ estado }}&days={{ days }}">Siguiente</a>
+            <a class="ti-btn" href="?page={{ page_obj.next_page_number }}&q={{ q }}&colectivo={{ colectivo }}&tipo={{ tipo }}&estado={{ estado }}&days={{ days }}">Siguiente</a>
           {% endif %}
         </div>
       </div>
     {% endif %}
   </section>
 
+  <div class="sm:hidden fixed inset-x-0 bottom-0 z-40 p-3 bg-white/90 dark:bg-slate-950/90 backdrop-blur border-t border-slate-200 dark:border-slate-800">
+    <a class="ti-btn-primary w-full text-center" href="{% url 'flota:parte_create' %}{% if colectivo_id %}?colectivo={{ colectivo_id }}{% elif colectivo %}?colectivo={{ colectivo }}{% endif %}">Nuevo parte</a>
+  </div>
+
+  <div class="sm:hidden h-16"></div>
 </div>
 {% endblock %}

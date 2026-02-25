@@ -49,7 +49,7 @@ class DashboardTests(TestCase):
             is_active=True,
         )
 
-        # Por vencer
+        # Por vencer (<= 7 días)
         Colectivo.objects.create(
             interno=102,
             dominio="CCC333",
@@ -57,13 +57,22 @@ class DashboardTests(TestCase):
             marca="X",
             modelo="Y",
             numero_chasis="CHASIS102",
-            revision_tecnica_vto=today + timedelta(days=10),
+            revision_tecnica_vto=today + timedelta(days=3),
             is_active=True,
         )
 
         self.client.login(username="user_a", password="pass12345")
         resp = self.client.get(reverse("core:dashboard"))
 
-        self.assertContains(resp, "VTV vencidos")
-        self.assertContains(resp, "VTV por vencer")
-        self.assertContains(resp, "VTV sin fecha")
+        # Título del bloque
+        self.assertContains(resp, "Vencimientos VTV")
+
+        # Estados esperados en la tabla
+        self.assertContains(resp, "Vencido")
+        self.assertContains(resp, "Por vencer")
+        self.assertContains(resp, "Pendiente")
+
+        # Internos presentes
+        self.assertContains(resp, "100")
+        self.assertContains(resp, "101")
+        self.assertContains(resp, "102")
