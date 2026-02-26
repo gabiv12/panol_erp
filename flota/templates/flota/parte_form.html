@@ -1,134 +1,161 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Nuevo parte | Flota{% endblock %}
-{% block page_title %}Nuevo parte diario{% endblock %}
-{% block page_subtitle %}Cargá lo mínimo (unidad + tipo + descripción). El resto es opcional según el caso.{% endblock %}
+{% block title %}{% if object %}Editar parte diario{% else %}Nuevo parte diario{% endif %}{% endblock %}
+{% block page_title %}{% if object %}Editar parte diario{% else %}Nuevo parte diario{% endif %}{% endblock %}
+{% block page_subtitle %}Carga guiada en 2 pasos (rápido y claro).{% endblock %}
 
 {% block content %}
-<div class="space-y-4">
+<section class="ti-card p-4 space-y-4">
 
-  <section class="ti-card p-4">
+  <div class="ti-badge-muted text-sm rounded-2xl px-4 py-3">
+    Guía rápida: completá unidad + tipo + al menos una descripción (mecánico / eléctrico / carrocería / combustible / observaciones).
+  </div>
 
-    <div class="ti-card p-3 mb-3">
-      <div class="text-sm font-semibold">Guía rápida</div>
-      <ul class="mt-2 text-sm list-disc pl-5 space-y-1">
-        <li><span class="font-semibold">Unidad</span>: elegí el interno correcto.</li>
-        <li><span class="font-semibold">Tipo</span>: Incidencia / Control / Mantenimiento / Auxilio.</li>
-        <li><span class="font-semibold">Descripción</span>: qué pasó + dónde + qué se hizo.</li>
-        <li>Si es <span class="font-semibold">Auxilio</span>, cargá inicio/fin. Si es <span class="font-semibold">Mantenimiento</span>, completá el bloque.</li>
-      </ul>
-      <div class="text-xs ti-subtitle mt-2">Después de guardar, podés adjuntar fotos/boletas y, si corresponde, registrar movimiento de inventario.</div>
+  {% if form.non_field_errors %}
+    <div class="ti-badge-critical text-sm rounded-2xl px-4 py-3">
+      {{ form.non_field_errors|striptags }}
+    </div>
+  {% endif %}
+
+  <form method="post" class="space-y-5" novalidate>
+    {% csrf_token %}
+
+    {{ form.descripcion }}
+
+    <div id="step1" class="space-y-4">
+      <div class="text-sm font-semibold">Paso 1 de 2 · Datos principales</div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div>
+          <label class="ti-label mb-1">Unidad</label>
+          {{ form.colectivo }}
+          {% if form.colectivo.errors %}<div class="text-sm ti-badge-critical mt-2">{{ form.colectivo.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="ti-label mb-1">Fecha/hora</label>
+          {{ form.fecha_evento }}
+          {% if form.fecha_evento.errors %}<div class="text-sm ti-badge-critical mt-2">{{ form.fecha_evento.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="ti-label mb-1">Odómetro (km)</label>
+          {{ form.odometro_km }}
+          {% if form.odometro_km.errors %}<div class="text-sm ti-badge-critical mt-2">{{ form.odometro_km.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div>
+          <label class="ti-label mb-1">Tipo</label>
+          {{ form.tipo }}
+          {% if form.tipo.errors %}<div class="text-sm ti-badge-critical mt-2">{{ form.tipo.errors|striptags }}</div>{% endif %}
+        </div>
+        <div>
+          <label class="ti-label mb-1">Severidad</label>
+          {{ form.severidad }}
+          {% if form.severidad.errors %}<div class="text-sm ti-badge-critical mt-2">{{ form.severidad.errors|striptags }}</div>{% endif %}
+        </div>
+        <div>
+          <label class="ti-label mb-1">Estado</label>
+          {{ form.estado }}
+          {% if form.estado.errors %}<div class="text-sm ti-badge-critical mt-2">{{ form.estado.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div>
+        <label class="ti-label mb-1">Chofer</label>
+        {{ form.chofer_label }}
+        {% if datalist_choferes %}
+          <datalist id="dl_choferes">
+            {% for x in datalist_choferes %}<option value="{{ x }}">{% endfor %}
+          </datalist>
+        {% endif %}
+        {% if form.chofer_label.errors %}<div class="text-sm ti-badge-critical mt-2">{{ form.chofer_label.errors|striptags }}</div>{% endif %}
+      </div>
+
+      <div class="flex items-center justify-end gap-2">
+        <a class="ti-btn" href="{% url 'flota:parte_list' %}">Cancelar</a>
+        <button type="button" class="ti-btn-primary" data-next-step>Continuar</button>
+      </div>
     </div>
 
-    <form method="post" class="space-y-3">
-      {% csrf_token %}
+    <div id="step2" class="space-y-4 hidden">
+      <div class="text-sm font-semibold">Paso 2 de 2 · Descripción y datos opcionales</div>
 
-      {% if form.non_field_errors %}
-        <div class="ti-alert ti-alert-error">
-          {% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-1">
+          <label class="ti-label mb-1">Parte mecánico</label>
+          {{ form.parte_mecanico }}
         </div>
-      {% endif %}
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div>
-          <label class="text-xs ti-subtitle">Unidad</label>
-          {{ form.colectivo }}
-          {% if form.colectivo.errors %}<div class="text-xs text-red-400">{{ form.colectivo.errors }}</div>{% endif %}
+        <div class="lg:col-span-1">
+          <label class="ti-label mb-1">Parte eléctrico</label>
+          {{ form.parte_electrico }}
         </div>
-
-        <div>
-          <label class="text-xs ti-subtitle">Fecha/hora</label>
-          {{ form.fecha_evento }}
-          {% if form.fecha_evento.errors %}<div class="text-xs text-red-400">{{ form.fecha_evento.errors }}</div>{% endif %}
-        </div>
-
-        <div>
-          <label class="text-xs ti-subtitle">Odómetro (km)</label>
-          {{ form.odometro_km }}
-          {% if form.odometro_km.errors %}<div class="text-xs text-red-400">{{ form.odometro_km.errors }}</div>{% endif %}
+        <div class="lg:col-span-1">
+          <label class="ti-label mb-1">Carrocería / varios</label>
+          {{ form.trabajos_carroceria_varios }}
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div>
-          <label class="text-xs ti-subtitle">Tipo</label>
-          {{ form.tipo }}
-          {% if form.tipo.errors %}<div class="text-xs text-red-400">{{ form.tipo.errors }}</div>{% endif %}
-        </div>
-        <div>
-          <label class="text-xs ti-subtitle">Severidad</label>
-          {{ form.severidad }}
-          {% if form.severidad.errors %}<div class="text-xs text-red-400">{{ form.severidad.errors }}</div>{% endif %}
-        </div>
-        <div>
-          <label class="text-xs ti-subtitle">Estado</label>
-          {{ form.estado }}
-          {% if form.estado.errors %}<div class="text-xs text-red-400">{{ form.estado.errors }}</div>{% endif %}
-        </div>
+      <div>
+        <label class="ti-label mb-1">Combustible en ruta (detalle)</label>
+        {{ form.combustible_ruta_detalle }}
       </div>
 
-      <div class="ti-card p-3">
+      <div id="mant_block" class="ti-card p-4 space-y-3">
         <div class="text-sm font-semibold">Mantenimiento (solo si Tipo = Mantenimiento)</div>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-2">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div>
-            <label class="text-xs ti-subtitle">Acción</label>
+            <label class="ti-label mb-1">Acción</label>
             {{ form.accion_mantenimiento }}
-            {% if form.accion_mantenimiento.errors %}<div class="text-xs text-red-400">{{ form.accion_mantenimiento.errors }}</div>{% endif %}
           </div>
           <div>
-            <label class="text-xs ti-subtitle">Km del cambio</label>
+            <label class="ti-label mb-1">KM del cambio</label>
             {{ form.km_mantenimiento }}
-            {% if form.km_mantenimiento.errors %}<div class="text-xs text-red-400">{{ form.km_mantenimiento.errors }}</div>{% endif %}
           </div>
           <div>
-            <label class="text-xs ti-subtitle">Matafuego vto (opcional)</label>
+            <label class="ti-label mb-1">Matafuego vto (opcional)</label>
             {{ form.matafuego_vto_nuevo }}
-            {% if form.matafuego_vto_nuevo.errors %}<div class="text-xs text-red-400">{{ form.matafuego_vto_nuevo.errors }}</div>{% endif %}
           </div>
         </div>
       </div>
 
-      <div class="ti-card p-3">
+      <div id="aux_block" class="ti-card p-4 space-y-3">
         <div class="text-sm font-semibold">Auxilio (solo si Tipo = Auxilio)</div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-2">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div>
-            <label class="text-xs ti-subtitle">Inicio</label>
+            <label class="ti-label mb-1">Inicio</label>
             {{ form.auxilio_inicio }}
           </div>
           <div>
-            <label class="text-xs ti-subtitle">Fin</label>
+            <label class="ti-label mb-1">Fin</label>
             {{ form.auxilio_fin }}
-            {% if form.auxilio_fin.errors %}<div class="text-xs text-red-400">{{ form.auxilio_fin.errors }}</div>{% endif %}
           </div>
         </div>
       </div>
 
       <div>
-        <label class="text-xs ti-subtitle">Descripción</label>
-        {{ form.descripcion }}
-        {% if form.descripcion.errors %}<div class="text-xs text-red-400">{{ form.descripcion.errors }}</div>{% endif %}
-      </div>
-
-      <div>
-        <label class="text-xs ti-subtitle">Observaciones</label>
+        <label class="ti-label mb-1">Observaciones</label>
         {{ form.observaciones }}
       </div>
 
-      <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+      {% if form.parte_mecanico.errors %}<div class="text-sm ti-badge-critical">{{ form.parte_mecanico.errors|striptags }}</div>{% endif %}
+      {% if form.accion_mantenimiento.errors %}<div class="text-sm ti-badge-critical">{{ form.accion_mantenimiento.errors|striptags }}</div>{% endif %}
+      {% if form.km_mantenimiento.errors %}<div class="text-sm ti-badge-critical">{{ form.km_mantenimiento.errors|striptags }}</div>{% endif %}
+      {% if form.auxilio_fin.errors %}<div class="text-sm ti-badge-critical">{{ form.auxilio_fin.errors|striptags }}</div>{% endif %}
 
-      <div class="flex flex-col sm:flex-row gap-2">
-        <button class="ti-btn-primary w-full sm:w-auto" type="submit">Guardar</button>
-        {% with cancel_url=request.GET.next|default:'' %}
-          {% if cancel_url %}
-            <a class="ti-btn w-full sm:w-auto text-center" href="{{ cancel_url }}">Cancelar</a>
-          {% else %}
-            <a class="ti-btn w-full sm:w-auto text-center" href="{% url 'flota:parte_list' %}">Cancelar</a>
-          {% endif %}
-        {% endwith %}
+      <div class="flex items-center justify-between gap-2">
+        <button type="button" class="ti-btn" data-prev-step>Volver</button>
+        <button type="submit" class="ti-btn-primary">{% if object %}Guardar{% else %}Crear{% endif %}</button>
       </div>
+    </div>
 
-    </form>
-  </section>
+  </form>
+</section>
+{% endblock %}
 
-</div>
+{% block extra_js %}
+<script src="{% static 'flota/js/parte_form_wizard.js' %}" defer></script>
 {% endblock %}

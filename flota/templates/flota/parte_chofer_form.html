@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Cargar parte | Chofer{% endblock %}
+{% block page_title %}Cargar parte{% endblock %}
+{% block page_subtitle %}Solo lo necesario: coche + km + descripción del problema.{% endblock %}
+
+{% block content %}
+
+<section class="ti-card p-4 space-y-4">
+
+  {% if request.GET.ok %}
+    <div class="ti-badge-muted text-sm rounded-2xl px-4 py-3">
+      Listo. Parte registrado. Referencia: <span class="font-semibold">PD-{{ request.GET.ok }}</span>.
+      Si necesitás registrar otro, cargalo debajo.
+    </div>
+  {% endif %}
+
+  <div class="ti-badge-muted text-sm rounded-2xl px-4 py-3">
+    Esta pantalla está pensada para cargar rápido desde el celular. Si no sabés un dato, completá lo más importante y agregá fotos.
+  </div>
+
+  {% if form.non_field_errors %}
+    <div class="ti-badge-critical text-sm rounded-2xl px-4 py-3">
+      {{ form.non_field_errors|striptags }}
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="space-y-5" novalidate>
+    {% csrf_token %}
+
+    <div id="step1" class="space-y-4">
+      <div class="text-sm font-semibold">Paso 1 de 2 · Unidad y kilometraje</div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
+          <label class="ti-label mb-1">Coche</label>
+          {{ form.colectivo }}
+          {% if form.colectivo.errors %}<div class="text-sm ti-badge-critical mt-2">{{ form.colectivo.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div>
+          <label class="ti-label mb-1">Kilometraje de la unidad</label>
+          {{ form.odometro_km }}
+          {% if form.odometro_km.errors %}<div class="text-sm ti-badge-critical mt-2">{{ form.odometro_km.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div>
+        <label class="ti-label mb-1">Chofer</label>
+        {{ form.chofer_label }}
+        {% if datalist_choferes %}
+          <datalist id="dl_choferes">
+            {% for x in datalist_choferes %}<option value="{{ x }}">{% endfor %}
+          </datalist>
+        {% endif %}
+        <div class="text-xs ti-subtitle mt-1">Formato recomendado: APELLIDO, Nombre (o solo apellido si así lo usan).</div>
+        {% if form.chofer_label.errors %}<div class="text-sm ti-badge-critical mt-2">{{ form.chofer_label.errors|striptags }}</div>{% endif %}
+      </div>
+
+      <div class="flex items-center justify-end gap-2">
+        <button type="button" class="ti-btn-primary" data-next-step>Continuar</button>
+      </div>
+    </div>
+
+    <div id="step2" class="space-y-4 hidden">
+      <div class="text-sm font-semibold">Paso 2 de 2 · Descripción y fotos</div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-1">
+          <label class="ti-label mb-1">Parte mecánico</label>
+          {{ form.parte_mecanico }}
+        </div>
+        <div class="lg:col-span-1">
+          <label class="ti-label mb-1">Parte eléctrico</label>
+          {{ form.parte_electrico }}
+        </div>
+        <div class="lg:col-span-1">
+          <label class="ti-label mb-1">Carrocería / varios</label>
+          {{ form.trabajos_carroceria_varios }}
+        </div>
+      </div>
+
+      <div>
+        <label class="ti-label mb-1">Si cargaste combustible en ruta (detalle)</label>
+        {{ form.combustible_ruta_detalle }}
+      </div>
+
+      <div>
+        <label class="ti-label mb-1">Adjuntá fotos (opcional)</label>
+        {{ form.fotos }}
+        <div class="text-xs ti-subtitle mt-1">Podés seleccionar varias fotos juntas.</div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2">
+        <button type="button" class="ti-btn" data-prev-step>Volver</button>
+        <button type="submit" class="ti-btn-primary">Guardar parte</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'flota/js/parte_chofer.js' %}" defer></script>
+{% endblock %}

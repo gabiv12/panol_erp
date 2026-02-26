@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from datetime import timedelta
 
@@ -14,7 +14,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.generic import ListView, CreateView, DetailView
 
 from .models import ParteDiario, ParteDiarioAdjunto, Colectivo, SalidaProgramada
-from .partes_forms import ParteDiarioForm, ParteDiarioAdjuntoForm
+from .partes_forms import ParteDiarioForm, ParteDiarioAdjuntoForm, ParteDiarioChoferForm
 
 
 def _clamp_days(raw: str) -> int:
@@ -332,3 +332,49 @@ def tv_taller(request):
     if request.GET.get("partial") == "1":
         return render(request, "flota/_tv_taller_rows.html", context)
     return render(request, "flota/tv_taller.html", context)
+
+from .salidas_views import _salidas_datalists
+
+@login_required
+@permission_required("flota.add_partediario", raise_exception=True)
+def parte_chofer_create(request):
+    """Cargar parte desde celular (flujo chofer)."""
+    ctx = {}
+    ctx.update(_salidas_datalists())
+
+    if request.method == "POST":
+        form = ParteDiarioChoferForm(request.POST, request.FILES)
+        if form.is_valid():
+            with transaction.atomic():
+                obj = form.save(commit=False)
+                obj.reportado_por = request.user
+
+                obj.tipo = ParteDiario.Tipo.INCIDENCIA
+                obj.severidad = ParteDiario.Severidad.MEDIA
+                obj.estado = ParteDiario.Estado.ABIERTO
+
+                parts = []
+                if (obj.parte_mecanico or "").strip():
+                    parts.append("MECÁNICO: " + (obj.parte_mecanico or "").strip())
+                if (obj.parte_electrico or "").strip():
+                    parts.append("ELÉCTRICO: " + (obj.parte_electrico or "").strip())
+                if (obj.trabajos_carroceria_varios or "").strip():
+                    parts.append("CARROCERÍA/VARIOS: " + (obj.trabajos_carroceria_varios or "").strip())
+                if (obj.combustible_ruta_detalle or "").strip():
+                    parts.append("COMBUSTIBLE EN RUTA: " + (obj.combustible_ruta_detalle or "").strip())
+
+                obj.descripcion = "\n\n".join(parts) if parts else "(sin descripción)"
+                obj.save()
+
+                for f in request.FILES.getlist("fotos"):
+                    ParteDiarioAdjunto.objects.create(parte=obj, archivo=f, descripcion="Foto")
+
+            messages.success(request, "Parte diario registrado correctamente.")
+            return redirect(f"{reverse('flota:chofer_parte_create')}?ok={obj.pk}")
+
+        messages.error(request, "No se pudo guardar. Revisá los campos marcados.")
+    else:
+        form = ParteDiarioChoferForm()
+
+    ctx["form"] = form
+    return render(request, "flota/parte_chofer_form.html", ctx)

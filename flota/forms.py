@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from django import forms
 
@@ -200,25 +200,31 @@ class SalidaProgramadaForm(forms.ModelForm):
 
 
 class SalidaProgramadaBulkForm(forms.ModelForm):
-    """Formulario compacto para editar el diagrama del día en tabla (bulk edit)."""
+    """Formulario compacto para editar el diagrama del dÃ­a en tabla (reemplazos rÃ¡pidos).
+
+    En operaciÃ³n real, la mayorÃ­a de horarios/etiquetas/recorridos son fijos.
+    En esta pantalla se permite cambiar SOLO:
+      - Unidad (colectivo)
+      - Chofer
+
+    Para cambios de horario o ediciÃ³n completa (ej: viajes ESPECIALES), usÃ¡:
+      Horarios -> Editar (o "Editar completo" desde esta tabla).
+    """
 
     class Meta:
         model = SalidaProgramada
         fields = [
-            "salida_programada",
             "colectivo",
-            "tipo",
-            "estado",
-            "seccion",
-            "salida_label",
-            "regreso",
             "chofer",
-            "recorrido",
         ]
-        widgets = {"salida_programada": forms.DateTimeInput(attrs={"type": "datetime-local"})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if "chofer" in self.fields:
+            self.fields["chofer"].widget.attrs.setdefault("placeholder", "Nombre y apellido")
+            self.fields["chofer"].widget.attrs.setdefault("list", "dl_choferes")
+
         for _, field in self.fields.items():
             w = field.widget
             cls = (w.attrs.get("class") or "").strip()
@@ -226,3 +232,4 @@ class SalidaProgramadaBulkForm(forms.ModelForm):
                 continue
             if "ti-input" not in cls:
                 w.attrs["class"] = (cls + " ti-input").strip()
+

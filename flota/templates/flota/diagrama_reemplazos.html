@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Reemplazos del día | Flota{% endblock %}
+{% block page_title %}Reemplazos del día{% endblock %}
+{% block page_subtitle %}Horarios fijos: cambiá solo Unidad y Chofer. Viajes especiales se editan aparte.{% endblock %}
+
+{% block content %}
+<section class="ti-card p-4 space-y-4">
+
+  {% if occupied_ids %}
+    <div class="ti-badge-warning text-sm rounded-2xl px-4 py-3">
+      Unidades ocupadas por viaje especial (no disponibles para asignar en salidas normales).
+    </div>
+  {% endif %}
+
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="text-sm ti-subtitle">{{ day|date:"d/m/Y" }}</div>
+    <div class="flex flex-wrap items-center gap-2">
+      <a class="ti-btn" href="{% url 'flota:salida_list' %}?fecha={{ day|date:'Y-m-d'|urlencode }}">Volver a Horarios</a>
+      <a class="ti-btn" href="{% url 'flota:salida_diagrama_print' %}?fecha={{ day|date:'Y-m-d'|urlencode }}" target="_blank" rel="noopener">Imprimir</a>
+    </div>
+  </div>
+
+  {% if formset.non_form_errors %}
+    <div class="ti-badge-critical text-sm rounded-2xl px-4 py-3">
+      {{ formset.non_form_errors|striptags }}
+    </div>
+  {% endif %}
+
+  <form method="post" class="space-y-4" novalidate>
+    {% csrf_token %}
+    {{ formset.management_form }}
+
+    {% if datalist_choferes %}
+      <datalist id="dl_choferes">
+        {% for x in datalist_choferes %}<option value="{{ x }}">{% endfor %}
+      </datalist>
+    {% endif %}
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-xs ti-subtitle">
+            <th class="text-left py-2 pr-3">Hora</th>
+            <th class="text-left py-2 pr-3">Sección</th>
+            <th class="text-left py-2 pr-3">Etiqueta</th>
+            <th class="text-left py-2 pr-3">Regreso</th>
+            <th class="text-left py-2 pr-3">Recorrido</th>
+            <th class="text-left py-2 pr-3">Unidad</th>
+            <th class="text-left py-2 pr-3">Chofer</th>
+            <th class="text-left py-2 pr-3">Alerta</th>
+            <th class="text-left py-2 pr-3">Especial</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800">
+          {% for form in formset %}
+            {% with obj=form.instance %}
+            <tr>
+              <td class="py-2 pr-3 whitespace-nowrap">
+                <div class="font-semibold">{{ obj.salida_programada|date:"H:i" }}</div>
+                <div class="text-xs ti-subtitle">{{ obj.tipo }}</div>
+              </td>
+              <td class="py-2 pr-3">
+                <div class="font-medium">{{ obj.seccion }}</div>
+              </td>
+              <td class="py-2 pr-3">
+                <div class="font-semibold">{{ obj.salida_label }}</div>
+              </td>
+              <td class="py-2 pr-3 whitespace-nowrap">{{ obj.regreso }}</td>
+              <td class="py-2 pr-3">{{ obj.recorrido }}</td>
+
+              <td class="py-2 pr-3 min-w-[240px]">
+                {{ form.colectivo }}
+                {% if form.colectivo.errors %}<div class="text-xs ti-badge-critical mt-2">{{ form.colectivo.errors|striptags }}</div>{% endif %}
+              </td>
+
+              <td class="py-2 pr-3 min-w-[220px]">
+                {{ form.chofer }}
+                {% if form.chofer.errors %}<div class="text-xs ti-badge-critical mt-2">{{ form.chofer.errors|striptags }}</div>{% endif %}
+              </td>
+
+              <td class="py-2 pr-3 whitespace-nowrap">
+                {% if obj.open_parte_pk %}
+                  <a class="ti-btn" href="{% url 'flota:parte_detail' obj.open_parte_pk %}" target="_blank" rel="noopener">Ver parte</a>
+                {% else %}
+                  <span class="ti-badge-muted">OK</span>
+                {% endif %}
+              </td>
+
+              <td class="py-2 pr-3 whitespace-nowrap">
+                {% if obj.tipo == "ESPECIAL" %}
+                  <a class="ti-btn" href="{% url 'flota:salida_update' obj.pk %}?fecha={{ day|date:'Y-m-d'|urlencode }}">Editar completo</a>
+                {% else %}
+                  <span class="ti-badge-muted">Fijo</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endwith %}
+          {% empty %}
+            <tr>
+              <td colspan="9" class="py-6 text-center ti-subtitle">No hay salidas para esa fecha.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex justify-end">
+      <button type="submit" class="ti-btn-primary">Guardar reemplazos</button>
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>window.__OCCUPIED_IDS__ = {{ occupied_ids|safe }};</script>
+
+<script src="{% static 'flota/js/diagrama_reemplazos.js' %}" defer></script>
+{% endblock %}

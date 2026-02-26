@@ -63,6 +63,15 @@ class ParteDiario(models.Model):
     descripcion = models.TextField()
     observaciones = models.TextField(blank=True, default="")
 
+    # ==========================
+    # Parte (Chofer) - réplica de Google Forms (para reportes)
+    # ==========================
+    chofer_label = models.CharField("chofer", max_length=80, blank=True, default="")
+    parte_mecanico = models.TextField("parte mecánico", blank=True, default="")
+    parte_electrico = models.TextField("parte eléctrico", blank=True, default="")
+    trabajos_carroceria_varios = models.TextField("carrocería / varios", blank=True, default="")
+    combustible_ruta_detalle = models.TextField("combustible en ruta (detalle)", blank=True, default="")
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -77,7 +86,7 @@ class ParteDiario(models.Model):
 
     @property
     def resumen(self) -> str:
-        txt = (self.descripcion or "").strip().replace("\\n", " ")
+        txt = (self.descripcion or "").strip().replace("\n", " ")
         return (txt[:120] + "...") if len(txt) > 120 else txt
 
     @property

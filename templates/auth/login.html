@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load static %}
 
 {% block title %}Iniciar sesión | La Termal ERP{% endblock %}
@@ -6,17 +6,17 @@
 {% block page_subtitle %}Acceso al sistema{% endblock %}
 
 {% block content %}
-<div class="min-h-[calc(100dvh-140px)] flex items-center justify-center py-10">
+<div class="min-h-[calc(100dvh-140px)] flex items-center justify-center py-10 px-4">
   <div class="w-full max-w-md">
     <div class="ti-card p-6">
 
       <div class="mb-6 text-center">
         <div class="flex justify-center mb-3">
-          <div class="relative h-16 w-16">
+          <div class="relative h-14 w-14">
             <img src="{% static 'img/fondo_blanco.svg' %}" alt="La Termal ERP"
-                 class="h-16 w-16 rounded-full bg-white p-1 dark:hidden" />
+                 class="h-14 w-14 rounded-full bg-white p-1 dark:hidden" />
             <img src="{% static 'img/fondo_oscuro.svg' %}" alt="La Termal ERP"
-                 class="h-16 w-16 rounded-full bg-transparent p-0 hidden dark:block" />
+                 class="h-14 w-14 rounded-full bg-transparent p-0 hidden dark:block" />
           </div>
         </div>
 
@@ -34,33 +34,36 @@
         {% csrf_token %}
 
         <div>
-          <label for="username" class="ti-label mb-1">Usuario</label>
-          <input id="username" name="username" class="ti-input w-full" required />
+          <label for="id_username" class="ti-label mb-1">Usuario</label>
+          <input id="id_username" name="username" class="ti-input" autocomplete="username" required />
         </div>
 
         <div>
           <div class="flex items-center justify-between mb-1">
-            <label for="password" class="ti-label">Contraseña</label>
+            <label for="id_password" class="ti-label">Contraseña</label>
             <button type="button"
                     class="text-xs font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
                     data-toggle-password
-                    data-target="#password">
+                    data-target="#id_password">
               Mostrar
             </button>
           </div>
-          <input id="password" name="password" type="password" class="ti-input w-full" required />
+          <input id="id_password" name="password" type="password" class="ti-input" autocomplete="current-password" required />
         </div>
 
-        <button class="ti-btn-primary w-full py-2.5" type="submit">
-          Entrar
-        </button>
-      </form>
+        <input type="hidden" name="next" value="{{ next }}" />
 
+        <button class="ti-btn-primary w-full py-2.5" type="submit">Entrar</button>
+      </form>
     </div>
+
+    <p class="mt-4 text-xs ti-subtitle text-center">
+      Acceso restringido por roles.
+    </p>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/pages/login.js' %}" defer></script>
+<script src="{% static 'core/js/login.js' %}" defer></script>
 {% endblock %}

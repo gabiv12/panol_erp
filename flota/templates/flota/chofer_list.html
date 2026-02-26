@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Choferes | Flota{% endblock %}
+{% block page_title %}Choferes{% endblock %}
+{% block page_subtitle %}Catálogo para autocompletar el diagrama{% endblock %}
+
+{% block content %}
+<section class="ti-card p-4 space-y-4">
+  <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 items-end">
+    <form method="get" class="grid grid-cols-1 lg:grid-cols-[1fr_240px_auto] gap-3">
+      <div>
+        <label class="ti-label mb-1">Buscar</label>
+        <input class="ti-input w-full" name="q" value="{{ q }}" placeholder="Apellido, nombre o legajo..." />
+      </div>
+      <div>
+        <label class="ti-label mb-1">Estado</label>
+        <select class="ti-input w-full" name="estado">
+          <option value="activos" {% if estado == "activos" %}selected{% endif %}>Activos</option>
+          <option value="inactivos" {% if estado == "inactivos" %}selected{% endif %}>Inactivos</option>
+          <option value="todos" {% if estado == "todos" %}selected{% endif %}>Todos</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button class="ti-btn-primary" type="submit">Filtrar</button>
+        <a class="ti-btn" href="{% url 'flota:chofer_list' %}">Limpiar</a>
+      </div>
+    </form>
+
+    <div class="flex gap-2 justify-end">
+      <a class="ti-btn-primary" href="{% url 'flota:chofer_create' %}">Nuevo chofer</a>
+    </div>
+  </div>
+
+  <div class="text-xs ti-subtitle">Formato recomendado: APELLIDO, Nombre.</div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left">
+          <th class="px-3 py-2">Apellido, nombre</th>
+          <th class="px-3 py-2">Legajo</th>
+          <th class="px-3 py-2">Teléfono</th>
+          <th class="px-3 py-2">Estado</th>
+          <th class="px-3 py-2 text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+        {% for it in items %}
+        <tr>
+          <td class="px-3 py-2">
+            <div class="font-semibold">{{ it.display_name }}</div>
+            {% if it.observaciones %}
+              <div class="text-xs ti-subtitle">{{ it.observaciones|truncatechars:80 }}</div>
+            {% endif %}
+          </td>
+          <td class="px-3 py-2 whitespace-nowrap">{{ it.legajo|default:"—" }}</td>
+          <td class="px-3 py-2 whitespace-nowrap">{{ it.telefono|default:"—" }}</td>
+          <td class="px-3 py-2 whitespace-nowrap">
+            {% if it.is_active %}
+              <span class="ti-badge-muted">Activo</span>
+            {% else %}
+              <span class="ti-badge-warning">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="px-3 py-2 text-right whitespace-nowrap">
+            <a class="ti-btn" href="{% url 'flota:chofer_update' it.pk %}">Editar</a>
+            <a class="ti-btn" href="{% url 'flota:chofer_toggle' it.pk %}">
+              {% if it.is_active %}Desactivar{% else %}Activar{% endif %}
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td class="px-3 py-8 text-center ti-subtitle" colspan="5">No hay choferes para mostrar.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

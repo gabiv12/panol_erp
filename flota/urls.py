@@ -1,7 +1,9 @@
-from django.urls import path
+﻿from django.urls import path
 
 from . import partes_views
 from . import salidas_views
+from . import diagrama_reemplazos_views
+from . import choferes_views
 from . import informe_views
 from . import views
 
@@ -28,6 +30,8 @@ urlpatterns = [
     path("partes/<int:pk>/adjuntos/agregar/", partes_views.parte_adjunto_add, name="parte_adjunto_add"),
     path("partes/<int:pk>/adjuntos/<int:adj_id>/eliminar/", partes_views.parte_adjunto_delete, name="parte_adjunto_delete"),
 
+        path("chofer/partes/nuevo/", partes_views.parte_chofer_create, name="chofer_parte_create"),
+
     # Horarios / Diagrama
     path("salidas/", salidas_views.SalidaProgramadaListView.as_view(), name="salida_list"),
     path("salidas/nuevo/", salidas_views.SalidaProgramadaCreateView.as_view(), name="salida_create"),
@@ -36,11 +40,13 @@ urlpatterns = [
     path("salidas/diagrama/", salidas_views.diagrama_print, name="salida_diagrama_print"),
     path("salidas/diagrama/editar/", salidas_views.diagrama_edit, name="salida_diagrama_edit"),
     path("salidas/copiar-dia-anterior/", salidas_views.salidas_copiar_dia_anterior, name="salida_copy_prev_day"),
+    path("salidas/generar-plantilla/", salidas_views.salidas_generar_desde_plantilla, name="salida_generar_plantilla"),
     path("salidas/copiar-15-dias/", salidas_views.salidas_copiar_15_dias, name="salida_copy_15"),
     path("plan/", salidas_views.plan_15_dias, name="plan_15"),
     path("plan/print/", salidas_views.plan_15_print, name="plan_15_print"),
     path("plan/export.csv", salidas_views.plan_15_export_csv, name="plan_15_export_csv"),
     path("plan/copiar-quincena/", salidas_views.plan_15_copiar_quincena_anterior, name="plan_15_copiar_quincena_anterior"),
+    path("salidas/diagrama/reemplazos/", diagrama_reemplazos_views.diagrama_reemplazos, name="salida_diagrama_reemplazos"),
 
     # API
     path("api/colectivo-info/", salidas_views.api_colectivo_info, name="api_colectivo_info"),
@@ -48,4 +54,13 @@ urlpatterns = [
     # Pantalla TV
     path("tv/horarios/", salidas_views.tv_horarios, name="tv_horarios"),
     path("tv/taller/", partes_views.tv_taller, name="tv_taller"),
+
+    path("choferes/", choferes_views.chofer_list, name="chofer_list"),
+    path("choferes/nuevo/", choferes_views.chofer_create, name="chofer_create"),
+    path("choferes/<int:pk>/editar/", choferes_views.chofer_update, name="chofer_update"),
+    path("choferes/<int:pk>/toggle/", choferes_views.chofer_toggle_activo, name="chofer_toggle"),
 ]
+
+
+
+

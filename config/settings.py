@@ -157,3 +157,7 @@ CSRF_COOKIE_SAMESITE = "Lax"
 
 # No forzamos SSL redirect en dev
 SECURE_SSL_REDIRECT = os.getenv("FORCE_SSL_REDIRECT", "0") == "1"
+# Uploads (fotos desde celulares pueden ser pesadas)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 60 * 1024 * 1024  # 60MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 60 * 1024 * 1024  # 60MB
+

@@ -8,6 +8,10 @@
 
   {# CSS offline (Tailwind build local) #}
   <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}" />
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/fondo_blanco.svg' %}" media="(prefers-color-scheme: light)" />
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/fondo_oscuro.svg' %}" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}" />
+  <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}" />
 
   {% block extra_head %}{% endblock %}
 </head>
@@ -151,3 +155,4 @@
   {% block extra_js %}{% endblock %}
 </body>
 </html>
+

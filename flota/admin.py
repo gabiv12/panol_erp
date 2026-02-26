@@ -1,7 +1,8 @@
-from django.contrib import admin
+﻿from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 
 from .models import Colectivo, SalidaProgramada
+from .choferes_models import Chofer
 from .resources import ColectivoResource
 
 
@@ -19,3 +20,11 @@ class SalidaProgramadaAdmin(admin.ModelAdmin):
     list_filter = ("tipo", "estado")
     search_fields = ("colectivo__dominio", "colectivo__interno", "chofer", "recorrido", "nota")
     ordering = ("-salida_programada",)
+
+
+@admin.register(Chofer)
+class ChoferAdmin(admin.ModelAdmin):
+    list_display = ('apellido', 'nombre', 'legajo', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('apellido', 'nombre', 'legajo')
+

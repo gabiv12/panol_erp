@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 """
 flota.salidas_views
@@ -851,3 +851,93 @@ def tv_horarios(request):
             "refresh_sec": 20,
         },
     )
+
+
+# ---------------------------------------------------------------------
+# Plantillas operativas (Normal / Domingo)
+# ---------------------------------------------------------------------
+def _find_source_day_for_plantilla(to_day, modo):
+    # Busca hacia atrÃ¡s (hasta 30 dÃ­as) un dÃ­a "modelo" con salidas.
+    modo = (modo or "normal").strip().lower()
+    for i in range(1, 31):
+        d = to_day - timedelta(days=i)
+        if modo == "domingo" and d.weekday() != 6:
+            continue
+        if modo == "normal" and d.weekday() == 6:
+            continue
+
+        s, e = _day_bounds(d)
+        if SalidaProgramada.objects.filter(salida_programada__gte=s, salida_programada__lt=e).exists():
+            return d
+
+    return to_day - timedelta(days=1)
+
+
+def _copy_salidas_between_days(request, from_day, to_day):
+    from_start, from_end = _day_bounds(from_day)
+    to_start, to_end = _day_bounds(to_day)
+
+    origen = (
+        SalidaProgramada.objects.select_related("colectivo")
+        .filter(salida_programada__gte=from_start, salida_programada__lt=from_end)
+        .order_by("salida_programada", "id")
+    )
+
+    if not origen.exists():
+        messages.warning(request, f"No hay salidas el dÃ­a modelo ({from_day}) para copiar.")
+        return redirect(f"{reverse_lazy('flota:salida_list')}?fecha={to_day}")
+
+    existentes = set(
+        SalidaProgramada.objects.filter(salida_programada__gte=to_start, salida_programada__lt=to_end)
+        .values_list("colectivo_id", "salida_programada")
+    )
+
+    created = 0
+    delta = (to_start - from_start)
+
+    for s in origen:
+        new_dt = s.salida_programada + delta
+        if (s.colectivo_id, new_dt) in existentes:
+            continue
+
+        obj = SalidaProgramada(
+            colectivo=s.colectivo,
+            salida_programada=new_dt,
+            llegada_programada=(s.llegada_programada + delta) if s.llegada_programada else None,
+            tipo=s.tipo,
+            estado=SalidaProgramada.Estado.PROGRAMADA,
+            seccion=s.seccion,
+            salida_label=s.salida_label,
+            regreso=s.regreso,
+            chofer=s.chofer,
+            recorrido=s.recorrido,
+            nota=s.nota,
+        )
+        obj.save()
+        created += 1
+
+    if created:
+        messages.success(request, f"Generadas {created} salidas desde plantilla ({from_day}) a {to_day}.")
+    else:
+        messages.info(request, "No se generaron salidas (ya existÃ­an).")
+
+    return redirect(f"{reverse_lazy('flota:salida_list')}?fecha={to_day}")
+
+
+@login_required
+@permission_required("flota.add_salidaprogramada", raise_exception=True)
+@require_POST
+def salidas_generar_desde_plantilla(request):
+    fecha = (request.POST.get("fecha") or "").strip()
+    modo = (request.POST.get("modo") or "normal").strip().lower()
+
+    if not fecha:
+        return HttpResponseBadRequest("Falta fecha")
+
+    try:
+        to_day = datetime.fromisoformat(fecha).date()
+    except Exception:
+        return HttpResponseBadRequest("Fecha invÃ¡lida")
+
+    from_day = _find_source_day_for_plantilla(to_day, modo)
+    return _copy_salidas_between_days(request, from_day, to_day)

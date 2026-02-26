@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Acceso denegado | La Termal ERP{% endblock %}
+{% block page_title %}Acceso denegado{% endblock %}
+{% block page_subtitle %}Error 403{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="ti-card p-6">
+    <div class="flex items-center gap-3 mb-2">
+      <img src="{% static 'img/fondo_blanco.svg' %}" class="h-10 w-10 dark:hidden" alt="La Termal ERP">
+      <img src="{% static 'img/fondo_oscuro.svg' %}" class="h-10 w-10 hidden dark:block" alt="La Termal ERP">
+      <div>
+        <div class="text-xl font-semibold">Tu usuario no tiene permiso para esta sección</div>
+        <div class="text-sm ti-subtitle">Si necesitás acceso, pedilo a la persona administradora del sistema.</div>
+      </div>
+    </div>
+
+    <div class="mt-4 grid gap-2 text-sm">
+      <div class="ti-badge-muted inline-flex w-fit">Qué podés hacer ahora</div>
+      <ul class="list-disc pl-5 space-y-1 text-slate-700 dark:text-slate-200">
+        <li>Volvé al <span class="font-semibold">Inicio</span> y elegí otra sección.</li>
+        <li>Si creés que es un error, cerrá sesión e ingresá con el usuario correcto.</li>
+      </ul>
+    </div>
+
+    <div class="mt-5 flex flex-wrap gap-2">
+      <a class="ti-btn-primary" href="{% url 'core:home' %}">Ir a Inicio</a>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="ti-btn" type="submit">Cerrar sesión</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

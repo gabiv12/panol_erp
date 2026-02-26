@@ -1,5 +1,7 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+
+from core.permissions import is_admin, is_supervisor
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -18,6 +20,7 @@ from .forms import UsuarioCreateForm, UsuarioUpdateForm
 
 
 @login_required
+@user_passes_test(lambda u: is_admin(u) or is_supervisor(u))
 def usuario_list(request):
     q = request.GET.get("q", "").strip()
 
@@ -41,6 +44,7 @@ def usuario_list(request):
 
 
 @login_required
+@user_passes_test(lambda u: is_admin(u) or is_supervisor(u))
 def usuario_create(request):
     if request.method == "POST":
         form = UsuarioCreateForm(request.POST)
@@ -63,6 +67,7 @@ def usuario_create(request):
 
 
 @login_required
+@user_passes_test(lambda u: is_admin(u) or is_supervisor(u))
 def usuario_update(request, pk):
     obj = get_object_or_404(User, pk=pk)
 
@@ -87,6 +92,7 @@ def usuario_update(request, pk):
 
 
 @login_required
+@user_passes_test(lambda u: is_admin(u) or is_supervisor(u))
 def usuario_delete(request, pk):
     obj = get_object_or_404(User, pk=pk)
 

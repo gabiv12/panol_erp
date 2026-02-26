@@ -1,0 +1,18 @@
+apellido,nombre,legajo,telefono,observaciones,is_active
+BARRETO,Lucas,1001,3516001001,Alta ficticia para pruebas,True
+BONFANTI,Mariano,1002,3516001002,Registro de prueba,True
+COMISO,Diego,1003,3516001003,Datos ficticios,True
+CPIN,Juan Pablo,1004,3516001004,Teléfono de prueba,True
+GALARZA,Sergio,1005,3516001005,OK pruebas,True
+GAUNA,Ezequiel,1006,3516001006,Chofer demo,True
+JUAREZ,Matías,1007,3516001007,Prueba importación,True
+LONGHI,Federico,1008,3516001008,Aparece en columna REGRESO,True
+MENDOZA,Nicolás,1009,3516001009,Observación ficticia,True
+NUÑEZ,Agustín,1010,3516001010,Sin novedades,True
+ORTIZ,Gonzalo,1011,3516001011,Cargado para testing,True
+PEREÑA,Ramiro,1012,3516001012,Prueba módulo RRHH,True
+RAPP,Facundo,1013,3516001013,Validar actualización,True
+ROMERO,Pablo,1014,3516001014,Registro ficticio,True
+SAYAS,Hernán,1015,3516001015,OK,True
+SOSA,Cristian,1016,3516001016,Prueba CSV,True
+VICINI,Iván,1017,3516001017,Alta QA,True

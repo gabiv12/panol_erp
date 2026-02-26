@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Dashboard | Pañol ERP{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
+{% block title %}Inicio | La Termal ERP{% endblock %}
+{% block page_title %}Inicio{% endblock %}
 {% block page_subtitle %}Pantalla operativa: qué está crítico hoy y qué acciones seguir.{% endblock %}
 
 {% block content %}
@@ -18,13 +18,17 @@
     </div>
 
     <div class="flex flex-wrap gap-2">
-      <a href="{% url 'inventario:movimiento_list' %}" class="ti-btn">Movimientos</a>
-      <a href="{% url 'inventario:stock_list' %}" class="ti-btn">Stock</a>
-      <a href="{% url 'inventario:producto_list' %}" class="ti-btn">Productos</a>
-      <a href="{% url 'inventario:ubicacion_list' %}" class="ti-btn">Ubicaciones</a>
-      <a href="{% url 'flota:colectivo_list' %}" class="ti-btn">Flota</a>
-      <a href="{% url 'flota:informe_flota' %}" class="ti-btn">Informe flota</a>
-      <a href="{% url 'flota:plan_15' %}" class="ti-btn">Plan 15 días</a>
+      {% url 'flota:salida_list' as url_horarios %}
+      {% url 'flota:parte_list' as url_partes %}
+      {% url 'inventario:movimiento_list' as url_movs %}
+      {% url 'flota:colectivo_list' as url_unidades %}
+      {% url 'flota:chofer_list' as url_choferes %}
+
+      {% if url_horarios %}<a href="{{ url_horarios }}" class="ti-btn">Horarios</a>{% endif %}
+      {% if url_partes %}<a href="{{ url_partes }}" class="ti-btn">Partes</a>{% endif %}
+      {% if url_movs %}<a href="{{ url_movs }}" class="ti-btn">Inventario</a>{% endif %}
+      {% if url_unidades %}<a href="{{ url_unidades }}" class="ti-btn">Unidades</a>{% endif %}
+      {% if url_choferes %}<a href="{{ url_choferes }}" class="ti-btn">Choferes</a>{% endif %}
     </div>
   </section>
 

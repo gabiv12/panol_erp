@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, F, Value, Q, DecimalField
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseForbidden
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import requires_csrf_token
 
@@ -20,6 +20,36 @@ _csrf_logger = logging.getLogger("django.security.csrf")
 # Tipo Decimal consistente con tu inventario (12,3)
 QTY_FIELD = DecimalField(max_digits=12, decimal_places=3)
 ZERO_QTY = Value(0, output_field=QTY_FIELD)
+
+
+
+@login_required
+def home_redirect(request):
+    """Landing seguro post-login.
+
+    Evita 403 cuando un usuario no tiene permisos de un módulo específico.
+    Redirige a la primera pantalla útil según el rol/permisos.
+    """
+    u = request.user
+
+    # Chofer: cargar parte rápido
+    if u.has_perm("flota.add_partediario"):
+        return redirect("flota:chofer_parte_create")
+
+    # Taller/Mecánico: lista de partes
+    if u.has_perm("flota.view_partediario"):
+        return redirect("flota:parte_list")
+
+    # Diagramación: horarios
+    if u.has_perm("flota.view_salidaprogramada"):
+        return redirect("flota:salida_list")
+
+    # Pañol/Inventario
+    if u.has_perm("inventario.view_producto") or u.has_perm("inventario.view_movimientostock"):
+        return redirect("inventario:movimiento_list")
+
+    # Fallback
+    return redirect("core:dashboard")
 
 
 @login_required

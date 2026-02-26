@@ -1,0 +1,44 @@
+{% load static %}
+<!doctype html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Error interno | La Termal ERP</title>
+  <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}" />
+  <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}" />
+</head>
+<body class="h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+  <div class="h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-3xl">
+      <div class="ti-card p-6">
+        <div class="flex items-center gap-3 mb-2">
+          <img src="{% static 'img/fondo_blanco.svg' %}" class="h-10 w-10 dark:hidden" alt="La Termal ERP">
+          <img src="{% static 'img/fondo_oscuro.svg' %}" class="h-10 w-10 hidden dark:block" alt="La Termal ERP">
+          <div>
+            <div class="text-xl font-semibold">Ocurrió un error interno</div>
+            <div class="text-sm ti-subtitle">No es tu culpa. Probá de nuevo en unos segundos.</div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid gap-2 text-sm">
+          <div class="ti-badge-muted inline-flex w-fit">Consejos rápidos</div>
+          <ul class="list-disc pl-5 space-y-1 text-slate-700 dark:text-slate-200">
+            <li>Recargá la página (F5).</li>
+            <li>Si estabas guardando un formulario, revisá si se guardó o no.</li>
+            <li>Si se repite, cerrá sesión y volvé a entrar.</li>
+          </ul>
+        </div>
+
+        <div class="mt-5 flex flex-wrap gap-2">
+          <a class="ti-btn-primary" href="/">Ir a Inicio</a>
+          <a class="ti-btn" href="javascript:location.reload()">Recargar</a>
+        </div>
+      </div>
+      <div class="mt-3 text-xs text-slate-500">
+        Si necesitás soporte, anotá qué pantalla estabas usando y qué botón tocaste.
+      </div>
+    </div>
+  </div>
+</body>
+</html>

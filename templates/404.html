@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Página no encontrada | La Termal ERP{% endblock %}
+{% block page_title %}Página no encontrada{% endblock %}
+{% block page_subtitle %}Error 404{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="ti-card p-6">
+    <div class="flex items-center gap-3 mb-2">
+      <img src="{% static 'img/fondo_blanco.svg' %}" class="h-10 w-10 dark:hidden" alt="La Termal ERP">
+      <img src="{% static 'img/fondo_oscuro.svg' %}" class="h-10 w-10 hidden dark:block" alt="La Termal ERP">
+      <div>
+        <div class="text-xl font-semibold">No encontramos esa pantalla</div>
+        <div class="text-sm ti-subtitle">Es posible que el enlace esté mal o que la pantalla se haya movido.</div>
+      </div>
+    </div>
+
+    <div class="mt-4 grid gap-2 text-sm">
+      <div class="ti-badge-muted inline-flex w-fit">Consejos rápidos</div>
+      <ul class="list-disc pl-5 space-y-1 text-slate-700 dark:text-slate-200">
+        <li>Volvé al <span class="font-semibold">Inicio</span> y entrá desde el menú.</li>
+        <li>Si copiaste un link, revisá que no tenga espacios.</li>
+        <li>Recargá la página (F5). Si persiste, cerrá sesión y volvé a entrar.</li>
+      </ul>
+    </div>
+
+    <div class="mt-5 flex flex-wrap gap-2">
+      <a class="ti-btn-primary" href="{% url 'core:home' %}">Ir a Inicio</a>
+      <a class="ti-btn" href="javascript:history.back()">Volver</a>
+      <a class="ti-btn" href="{% url 'login' %}">Iniciar sesión</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
