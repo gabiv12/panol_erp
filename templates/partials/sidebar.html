@@ -1,39 +1,29 @@
 {% load static %}
-
-{#
-  Sidebar principal del sistema.
-
-  Reglas:
-  - No mostrar Plan 15 días (módulo deshabilitado por ahora).
-  - Mantener agrupación por áreas.
-  - "Próximamente" sólo visible para administración (evita ruido a usuarios operativos).
-#}
-
 <div class="ti-sidebar">
 
-  <!-- Header / Marca -->
   <div class="ti-sidebar__brand">
-    <div class="ti-brand">
-      <div class="ti-brand__logo">
-        <img src="{% static 'img/fondo_blanco.svg' %}" alt="La Termal ERP" class="dark:hidden" />
-        <img src="{% static 'img/fondo_oscuro.svg' %}" alt="La Termal ERP" class="hidden dark:block" />
+    <div class="flex items-center gap-3">
+      <div class="shrink-0">
+        <img src="{% static 'img/fondo_blanco.svg' %}" alt="La Termal ERP" class="dark:hidden h-10 w-10" />
+        <img src="{% static 'img/fondo_oscuro.svg' %}" alt="La Termal ERP" class="hidden dark:block h-10 w-10" />
       </div>
-      <div class="ti-brand__text">
+      <div class="min-w-0">
         <div class="ti-brand__title">La Termal ERP</div>
         <div class="ti-brand__subtitle">Flota · Taller · Inventario</div>
       </div>
     </div>
   </div>
 
-  <!-- Navegación -->
   <nav class="ti-nav">
 
     {% url 'core:dashboard' as url_dashboard %}
 
     {% url 'flota:colectivo_list' as url_colectivos %}
     {% url 'flota:salida_list' as url_horarios %}
+    {% url 'flota:salida_diagrama_print' as url_diagrama %}
     {% url 'flota:parte_list' as url_partes %}
     {% url 'flota:chofer_list' as url_choferes %}
+    {% url 'flota:chofer_parte_create' as url_parte_chofer %}
 
     {% url 'inventario:producto_list' as url_inventario %}
     {% url 'inventario:movimiento_list' as url_movimientos %}
@@ -43,196 +33,171 @@
     {% url 'flota:tv_horarios' as url_tv_horarios %}
     {% url 'flota:tv_taller' as url_tv_taller %}
 
-    <!-- Operación -->
-    <div class="ti-navtitle">Operación</div>
+    <div class="mt-1 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Operación</div>
 
-    <a href="{{ url_dashboard }}" class="ti-navitem {% if request.path|slice:':10' == '/dashboard' %}is-active{% endif %}">
-      <span class="ti-navicon"><i class="fa-solid fa-house"></i></span>
-      <span class="ti-navlabel">
-        <span class="ti-navlabel__title">Inicio</span>
-        <span class="ti-navlabel__subtitle">Panel general</span>
+    <a href="{{ url_dashboard }}" class="ti-navlink {% if request.path|slice:':10' == '/dashboard' %}ti-navlink-active{% endif %}">
+      <span class="ti-navicon">{% include "partials/svg_home.html" %}</span>
+      <span class="min-w-0">
+        <span class="ti-navtitle">Inicio</span>
+        <span class="ti-navsub">Panel general</span>
       </span>
     </a>
 
+    {% if show_flota %}
+      <div class="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Flota</div>
 
-    <!-- Flota -->
-    {% if show_flota|default:True %}
-      <div class="ti-navtitle">Flota</div>
+      {% if is_chofer_only %}
+        <a href="{{ url_diagrama }}" class="ti-navlink {% if request.path|slice:':19' == '/flota/salidas/diagrama' %}ti-navlink-active{% endif %}">
+          <span class="ti-navicon">{% include "partials/svg_route.html" %}</span>
+          <span class="min-w-0">
+            <span class="ti-navtitle">Horarios</span>
+            <span class="ti-navsub">Diagrama del día</span>
+          </span>
+        </a>
 
-      <a href="{{ url_colectivos }}" class="ti-navitem {% if request.path|slice:':16' == '/flota/colectivos' %}is-active{% endif %}">
-        <span class="ti-navicon"><i class="fa-solid fa-bus"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Unidades</span>
-          <span class="ti-navlabel__subtitle">Estado y vencimientos</span>
+        <a href="{{ url_parte_chofer }}" class="ti-navlink {% if request.path|slice:':23' == '/flota/chofer/partes' %}ti-navlink-active{% endif %}">
+          <span class="ti-navicon">{% include "partials/svg_wrench.html" %}</span>
+          <span class="min-w-0">
+            <span class="ti-navtitle">Cargar parte</span>
+            <span class="ti-navsub">Formulario simple</span>
+          </span>
+        </a>
+      {% else %}
+        {% if show_flota_full %}
+          <a href="{{ url_colectivos }}" class="ti-navlink {% if request.path|slice:':16' == '/flota/colectivos' %}ti-navlink-active{% endif %}">
+            <span class="ti-navicon">{% include "partials/svg_bus.html" %}</span>
+            <span class="min-w-0">
+              <span class="ti-navtitle">Unidades</span>
+              <span class="ti-navsub">Estado y vencimientos</span>
+            </span>
+          </a>
+
+          <a href="{{ url_partes }}" class="ti-navlink {% if request.path|slice:':13' == '/flota/partes' %}ti-navlink-active{% endif %}">
+            <span class="ti-navicon">{% include "partials/svg_wrench.html" %}</span>
+            <span class="min-w-0">
+              <span class="ti-navtitle">Partes diarios</span>
+              <span class="ti-navsub">Registro y seguimiento</span>
+            </span>
+          </a>
+
+          <a href="{{ url_horarios }}" class="ti-navlink {% if request.path|slice:':13' == '/flota/salidas' %}ti-navlink-active{% endif %}">
+            <span class="ti-navicon">{% include "partials/svg_calendar.html" %}</span>
+            <span class="min-w-0">
+              <span class="ti-navtitle">Horarios</span>
+              <span class="ti-navsub">Salidas y especiales</span>
+            </span>
+          </a>
+
+          <a href="{{ url_choferes }}" class="ti-navlink {% if request.path|slice:':14' == '/flota/choferes' %}ti-navlink-active{% endif %}">
+            <span class="ti-navicon">{% include "partials/svg_user.html" %}</span>
+            <span class="min-w-0">
+              <span class="ti-navtitle">Choferes</span>
+              <span class="ti-navsub">Legajo básico</span>
+            </span>
+          </a>
+        {% else %}
+          <a href="{{ url_diagrama }}" class="ti-navlink {% if request.path|slice:':19' == '/flota/salidas/diagrama' %}ti-navlink-active{% endif %}">
+            <span class="ti-navicon">{% include "partials/svg_route.html" %}</span>
+            <span class="min-w-0">
+              <span class="ti-navtitle">Horarios</span>
+              <span class="ti-navsub">Diagrama del día</span>
+            </span>
+          </a>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+
+    {% if show_inventario %}
+      <div class="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Inventario</div>
+
+      <a href="{{ url_inventario }}" class="ti-navlink {% if request.path|slice:':20' == '/inventario/productos' %}ti-navlink-active{% endif %}">
+        <span class="ti-navicon">{% include "partials/svg_box.html" %}</span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Inventario</span>
+          <span class="ti-navsub">Productos, stock y movimientos</span>
         </span>
       </a>
 
-      <a href="{{ url_partes }}" class="ti-navitem {% if request.path|slice:':13' == '/flota/partes' %}is-active{% endif %}">
-        <span class="ti-navicon"><i class="fa-regular fa-clipboard"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Partes diarios</span>
-          <span class="ti-navlabel__subtitle">Registro y seguimiento</span>
-        </span>
-      </a>
-
-      <a href="{{ url_horarios }}" class="ti-navitem {% if request.path|slice:':13' == '/flota/salidas' %}is-active{% endif %}">
-        <span class="ti-navicon"><i class="fa-regular fa-clock"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Horarios</span>
-          <span class="ti-navlabel__subtitle">Salidas y especiales</span>
-        </span>
-      </a>
-
-      <a href="{{ url_choferes }}" class="ti-navitem {% if request.path|slice:':14' == '/flota/choferes' %}is-active{% endif %}">
-        <span class="ti-navicon"><i class="fa-solid fa-user"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Choferes</span>
-          <span class="ti-navlabel__subtitle">Legajo básico</span>
+      <a href="{{ url_movimientos }}" class="ti-navlink {% if request.path|slice:':22' == '/inventario/movimientos' %}ti-navlink-active{% endif %}">
+        <span class="ti-navicon">{% include "partials/svg_arrows.html" %}</span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Movimientos</span>
+          <span class="ti-navsub">Entradas / salidas / ajustes</span>
         </span>
       </a>
     {% endif %}
 
+    {% if show_admin %}
+      <div class="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Sistema</div>
 
-    <!-- Inventario -->
-    {% if show_inventario|default:True %}
-      <div class="ti-navtitle">Inventario</div>
-
-      <a href="{{ url_inventario }}" class="ti-navitem {% if request.path|slice:':20' == '/inventario/productos' %}is-active{% endif %}">
-        <span class="ti-navicon"><i class="fa-solid fa-boxes-stacked"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Inventario</span>
-          <span class="ti-navlabel__subtitle">Productos, stock y movimientos</span>
-        </span>
-      </a>
-
-      <a href="{{ url_movimientos }}" class="ti-navitem {% if request.path|slice:':22' == '/inventario/movimientos' %}is-active{% endif %}">
-        <span class="ti-navicon"><i class="fa-solid fa-right-left"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Movimientos</span>
-          <span class="ti-navlabel__subtitle">Entradas / salidas / ajustes</span>
+      <a href="{{ url_usuarios }}" class="ti-navlink {% if request.path|slice:':9' == '/usuarios' %}ti-navlink-active{% endif %}">
+        <span class="ti-navicon">{% include "partials/svg_settings.html" %}</span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Usuarios</span>
+          <span class="ti-navsub">Accesos y roles</span>
         </span>
       </a>
     {% endif %}
 
+    {% if show_tv %}
+      <div class="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Pantallas</div>
 
-    <!-- Sistema -->
-    {% if show_admin|default:request.user.is_superuser %}
-      <div class="ti-navtitle">Sistema</div>
+      <a href="{{ url_tv_horarios }}" class="ti-navlink {% if request.path|slice:':17' == '/flota/tv/horarios' %}ti-navlink-active{% endif %}">
+        <span class="ti-navicon">{% include "partials/svg_chart.html" %}</span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">TV Horarios</span>
+          <span class="ti-navsub">Próximas salidas</span>
+        </span>
+      </a>
 
-      <a href="{{ url_usuarios }}" class="ti-navitem {% if request.path|slice:':9' == '/usuarios' %}is-active{% endif %}">
-        <span class="ti-navicon"><i class="fa-solid fa-user-gear"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Administración</span>
-          <span class="ti-navlabel__subtitle">Usuarios y roles</span>
+      <a href="{{ url_tv_taller }}" class="ti-navlink {% if request.path|slice:':15' == '/flota/tv/taller' %}ti-navlink-active{% endif %}">
+        <span class="ti-navicon">{% include "partials/svg_wrench.html" %}</span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">TV Taller</span>
+          <span class="ti-navsub">Partes y prioridad</span>
         </span>
       </a>
     {% endif %}
 
+    {% if show_proximamente %}
+      <div class="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Próximamente</div>
 
-    <!-- Pantallas (TV) -->
-    {% if show_tv|default:request.user.is_superuser %}
-      <div class="ti-navtitle">Pantallas</div>
-
-      <a href="{{ url_tv_horarios }}" class="ti-navitem {% if request.path|slice:':17' == '/flota/tv/horarios' %}is-active{% endif %}">
-        <span class="ti-navicon"><i class="fa-regular fa-rectangle-list"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">TV Horarios</span>
-          <span class="ti-navlabel__subtitle">Próximas salidas</span>
-        </span>
-      </a>
-
-      <a href="{{ url_tv_taller }}" class="ti-navitem {% if request.path|slice:':15' == '/flota/tv/taller' %}is-active{% endif %}">
-        <span class="ti-navicon"><i class="fa-solid fa-screwdriver-wrench"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">TV Taller</span>
-          <span class="ti-navlabel__subtitle">Partes y prioridad</span>
-        </span>
-      </a>
-    {% endif %}
-
-
-    <!-- Roadmap / Próximos módulos -->
-    {% if show_admin|default:request.user.is_superuser %}
-      <div class="ti-navtitle">Próximamente</div>
-
-      <div class="ti-navitem opacity-60 pointer-events-none">
-        <span class="ti-navicon"><i class="fa-solid fa-warehouse"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Compras</span>
-          <span class="ti-navlabel__subtitle">Proveedores y facturas (Próx.)</span>
+      <div class="ti-navlink ti-navlink-disabled">
+        <span class="ti-navicon">{% include "partials/svg_box.html" %}</span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Compras</span>
+          <span class="ti-navsub">Proveedores y facturas (Próx.)</span>
         </span>
       </div>
 
-      <div class="ti-navitem opacity-60 pointer-events-none">
-        <span class="ti-navicon"><i class="fa-solid fa-gas-pump"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Combustible</span>
-          <span class="ti-navlabel__subtitle">Cargas y consumo (Próx.)</span>
+      <div class="ti-navlink ti-navlink-disabled">
+        <span class="ti-navicon">{% include "partials/svg_bell.html" %}</span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Alertas</span>
+          <span class="ti-navsub">Triage (Próx.)</span>
         </span>
       </div>
 
-      <div class="ti-navitem opacity-60 pointer-events-none">
-        <span class="ti-navicon"><i class="fa-solid fa-screwdriver-wrench"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Taller</span>
-          <span class="ti-navlabel__subtitle">Órdenes de trabajo (Próx.)</span>
-        </span>
-      </div>
-
-      <div class="ti-navitem opacity-60 pointer-events-none">
-        <span class="ti-navicon"><i class="fa-solid fa-calendar-check"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Mantenimientos</span>
-          <span class="ti-navlabel__subtitle">Programados (Próx.)</span>
-        </span>
-      </div>
-
-      <div class="ti-navitem opacity-60 pointer-events-none">
-        <span class="ti-navicon"><i class="fa-solid fa-screwdriver"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Repuestos</span>
-          <span class="ti-navlabel__subtitle">Consumos (Próx.)</span>
-        </span>
-      </div>
-
-      <div class="ti-navitem opacity-60 pointer-events-none">
-        <span class="ti-navicon"><i class="fa-solid fa-bell"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Alertas</span>
-          <span class="ti-navlabel__subtitle">Triage (Próx.)</span>
-        </span>
-      </div>
-
-      <div class="ti-navitem opacity-60 pointer-events-none">
-        <span class="ti-navicon"><i class="fa-solid fa-chart-line"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Reportes</span>
-          <span class="ti-navlabel__subtitle">Operativos (Próx.)</span>
-        </span>
-      </div>
-
-      <div class="ti-navitem opacity-60 pointer-events-none">
-        <span class="ti-navicon"><i class="fa-solid fa-circle-notch"></i></span>
-        <span class="ti-navlabel">
-          <span class="ti-navlabel__title">Gomería</span>
-          <span class="ti-navlabel__subtitle">Cubiertas (Próx.)</span>
+      <div class="ti-navlink ti-navlink-disabled">
+        <span class="ti-navicon">{% include "partials/svg_chart.html" %}</span>
+        <span class="min-w-0">
+          <span class="ti-navtitle">Reportes</span>
+          <span class="ti-navsub">Operativos (Próx.)</span>
         </span>
       </div>
     {% endif %}
 
   </nav>
 
-
-  <!-- Footer (usuario activo) -->
   <div class="ti-sidebar__footer">
-    <div class="ti-user">
+    <div class="min-w-0">
       <div class="ti-user__name">{{ request.user.username }}</div>
       <div class="ti-user__subtitle">Sesión activa</div>
     </div>
 
     <form method="post" action="{% url 'logout' %}">
       {% csrf_token %}
-      <button type="submit" class="ti-btn-secondary">Salir</button>
+      <button type="submit" class="ti-btn">Salir</button>
     </form>
   </div>
 

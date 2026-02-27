@@ -4,21 +4,32 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
+from core.permissions import ROLE_ADMIN, ROLE_CHOFER
+
 
 class UsuariosAdminViewsTests(TestCase):
     """Tests mínimos para el módulo Administración > Usuarios.
 
-    Alcance: login requerido + formularios (alta/edición/eliminación) sin permisos finos aún.
+    Alcance:
+    - Login requerido
+    - Superusuario requerido
+    - Formularios (alta/edición/eliminación) con rol + módulos
     """
 
     def setUp(self):
-        self.admin = User.objects.create_user(username="admin", password="admin12345", is_staff=True)
+        self.admin = User.objects.create_superuser(username="admin", password="admin12345", email="admin@example.com")
 
     def test_list_requires_login(self):
         resp = self.client.get(reverse("usuarios:usuario_list"))
         self.assertEqual(resp.status_code, 302)
 
-    def test_list_ok_when_logged(self):
+    def test_list_requires_superuser(self):
+        User.objects.create_user(username="staff", password="x12345", is_staff=True)
+        self.client.login(username="staff", password="x12345")
+        resp = self.client.get(reverse("usuarios:usuario_list"))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_list_ok_when_superuser(self):
         self.client.login(username="admin", password="admin12345")
         resp = self.client.get(reverse("usuarios:usuario_list"))
         self.assertEqual(resp.status_code, 200)
@@ -29,6 +40,8 @@ class UsuariosAdminViewsTests(TestCase):
         resp = self.client.post(
             reverse("usuarios:usuario_create"),
             data={
+                "role": ROLE_CHOFER,
+                "modules": [],
                 "username": "user_b",
                 "first_name": "Usuario",
                 "last_name": "B",
@@ -43,7 +56,6 @@ class UsuariosAdminViewsTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(User.objects.filter(username="user_b").exists())
 
-        # Verifica que la contraseña quedó seteada correctamente
         self.client.logout()
         ok = self.client.login(username="user_b", password="pass12345!")
         self.assertTrue(ok)
@@ -53,10 +65,11 @@ class UsuariosAdminViewsTests(TestCase):
 
         self.client.login(username="admin", password="admin12345")
 
-        # 1) Editar sin cambiar password
         resp = self.client.post(
             reverse("usuarios:usuario_update", args=[u.id]),
             data={
+                "role": ROLE_CHOFER,
+                "modules": [],
                 "username": "user_c",
                 "first_name": "",
                 "last_name": "",
@@ -73,12 +86,13 @@ class UsuariosAdminViewsTests(TestCase):
         self.client.logout()
         self.assertTrue(self.client.login(username="user_c", password="oldpass123"))
 
-        # 2) Editar cambiando password
         self.client.logout()
         self.client.login(username="admin", password="admin12345")
         resp = self.client.post(
             reverse("usuarios:usuario_update", args=[u.id]),
             data={
+                "role": ROLE_CHOFER,
+                "modules": [],
                 "username": "user_c",
                 "first_name": "",
                 "last_name": "",
@@ -99,11 +113,9 @@ class UsuariosAdminViewsTests(TestCase):
         u = User.objects.create_user(username="user_del", password="pass123")
         self.client.login(username="admin", password="admin12345")
 
-        # GET confirm
         resp = self.client.get(reverse("usuarios:usuario_delete", args=[u.id]))
         self.assertEqual(resp.status_code, 200)
 
-        # POST delete
         resp = self.client.post(reverse("usuarios:usuario_delete", args=[u.id]), follow=True)
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(User.objects.filter(username="user_del").exists())

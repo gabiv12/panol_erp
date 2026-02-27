@@ -121,6 +121,21 @@
   .ti-badge-high     { @apply ti-badge border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200; }
   .ti-badge-critical { @apply ti-badge border-red-200 bg-red-50 text-red-800 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200; }
 
+
+  .ti-sidebar { @apply h-full flex flex-col; overflow: hidden; }
+  .ti-sidebar__brand { @apply px-4 py-4; }
+  .ti-brand__logo img { @apply h-10 w-10; }
+  .ti-brand__title { @apply font-semibold text-slate-900 dark:text-slate-100; }
+  .ti-brand__subtitle { @apply text-xs text-slate-600 dark:text-slate-300; }
+  .ti-nav { @apply px-3 pb-3 flex-1 min-h-0; overflow: hidden; }
+  .ti-navsection { @apply mb-2; }
+  .ti-sidebar__footer { @apply px-4 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3; }
+  .ti-user__name { @apply text-sm font-semibold text-slate-900 dark:text-slate-100; }
+  .ti-user__subtitle { @apply text-xs text-slate-600 dark:text-slate-300; }
+  .ti-nav { scrollbar-width: none; }
+  .ti-nav::-webkit-scrollbar { display: none; }
+
+
   /* Sidebar nav */
   .ti-navlink {
     @apply flex items-start gap-3 rounded-2xl px-3 py-2 text-sm
@@ -134,7 +149,7 @@
   .ti-navlink-disabled {
     @apply opacity-60 cursor-not-allowed;
   }
-  .ti-navicon { @apply mt-0.5 text-slate-500 dark:text-slate-400; }
+  .ti-navicon { @apply mt-0.5 text-slate-500 dark:text-slate-400 w-6 h-6 inline-flex items-center justify-center flex-none; }
   .ti-navtitle { @apply block font-semibold leading-tight truncate; }
   .ti-navsub { @apply block text-xs ti-subtitle leading-tight truncate; }
 

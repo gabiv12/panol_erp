@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Horarios (doble) | Flota{% endblock %}
+{% block page_title %}Horarios (doble){% endblock %}
+{% block page_subtitle %}Hoy y mañana en paralelo{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+  <section class="ti-card p-4">
+    <div class="flex items-end justify-between gap-3">
+      <div>
+        <div class="text-base font-semibold">Día A</div>
+        <div class="text-xs ti-subtitle">{{ day_a|date:"d/m/Y" }}</div>
+      </div>
+      <a class="ti-btn" href="{% url 'flota:salida_list' %}?fecha={{ day_a|date:'Y-m-d' }}">Ver listado</a>
+    </div>
+
+    <div class="mt-3 ti-card p-0 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left">
+              <th class="px-3 py-2">Hora</th>
+              <th class="px-3 py-2">Unidad</th>
+              <th class="px-3 py-2">Sección / Etiqueta</th>
+              <th class="px-3 py-2">Regreso</th>
+              <th class="px-3 py-2">Chofer</th>
+              <th class="px-3 py-2">Recorrido</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in salidas_a %}
+              <tr class="border-t border-slate-200 dark:border-slate-800">
+                <td class="px-3 py-2 whitespace-nowrap font-semibold">{{ s.salida_programada|date:"H:i" }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">
+                  <div class="font-semibold">Interno {{ s.colectivo.interno }}</div>
+                  <div class="text-xs ti-subtitle">{{ s.colectivo.dominio }}</div>
+                </td>
+                <td class="px-3 py-2">
+                  <div class="text-xs ti-subtitle">{{ s.seccion }}</div>
+                  <div class="font-semibold">{{ s.salida_label }}</div>
+                </td>
+                <td class="px-3 py-2">{{ s.regreso }}</td>
+                <td class="px-3 py-2">{{ s.chofer }}</td>
+                <td class="px-3 py-2">{{ s.recorrido }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="px-3 py-6 text-center ti-subtitle">No hay salidas.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="ti-card p-4">
+    <div class="flex items-end justify-between gap-3">
+      <div>
+        <div class="text-base font-semibold">Día B</div>
+        <div class="text-xs ti-subtitle">{{ day_b|date:"d/m/Y" }}</div>
+      </div>
+      <a class="ti-btn" href="{% url 'flota:salida_list' %}?fecha={{ day_b|date:'Y-m-d' }}">Ver listado</a>
+    </div>
+
+    <div class="mt-3 ti-card p-0 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left">
+              <th class="px-3 py-2">Hora</th>
+              <th class="px-3 py-2">Unidad</th>
+              <th class="px-3 py-2">Sección / Etiqueta</th>
+              <th class="px-3 py-2">Regreso</th>
+              <th class="px-3 py-2">Chofer</th>
+              <th class="px-3 py-2">Recorrido</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in salidas_b %}
+              <tr class="border-t border-slate-200 dark:border-slate-800">
+                <td class="px-3 py-2 whitespace-nowrap font-semibold">{{ s.salida_programada|date:"H:i" }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">
+                  <div class="font-semibold">Interno {{ s.colectivo.interno }}</div>
+                  <div class="text-xs ti-subtitle">{{ s.colectivo.dominio }}</div>
+                </td>
+                <td class="px-3 py-2">
+                  <div class="text-xs ti-subtitle">{{ s.seccion }}</div>
+                  <div class="font-semibold">{{ s.salida_label }}</div>
+                </td>
+                <td class="px-3 py-2">{{ s.regreso }}</td>
+                <td class="px-3 py-2">{{ s.chofer }}</td>
+                <td class="px-3 py-2">{{ s.recorrido }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="px-3 py-6 text-center ti-subtitle">No hay salidas.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+{% endblock %}

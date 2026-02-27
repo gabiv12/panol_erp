@@ -1,30 +1,23 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-
-from core.permissions import is_admin, is_supervisor
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
+from core.permissions import ROLE_CHOICES, user_role, MODULE_CHOICES, user_modules
 from .forms import UsuarioCreateForm, UsuarioUpdateForm
 
 
-# ==========================================================
-# Administración > Usuarios
-# ----------------------------------------------------------
-# Objetivo:
-# - Listar / crear / editar / eliminar usuarios.
-# - Corregir alta: ahora se define contraseña desde el formulario.
-# - Mantener rutas/URLs existentes.
-# ==========================================================
+def _is_superadmin(u):
+    return bool(u and u.is_authenticated and u.is_superuser)
 
 
 @login_required
-@user_passes_test(lambda u: is_admin(u) or is_supervisor(u))
+@user_passes_test(_is_superadmin)
 def usuario_list(request):
     q = request.GET.get("q", "").strip()
 
-    qs = User.objects.all().order_by("username")
+    qs = User.objects.all().order_by("username").prefetch_related("groups")
     if q:
         qs = qs.filter(
             Q(username__icontains=q)
@@ -32,6 +25,15 @@ def usuario_list(request):
             | Q(last_name__icontains=q)
             | Q(email__icontains=q)
         )
+
+    role_label = dict(ROLE_CHOICES)
+    mod_label = dict(MODULE_CHOICES)
+
+    for u in qs:
+        rk = user_role(u)
+        u.role_key = rk
+        u.role_label = role_label.get(rk, "—")
+        u.modules_labels = [mod_label.get(k, k) for k in user_modules(u)]
 
     return render(
         request,
@@ -44,7 +46,7 @@ def usuario_list(request):
 
 
 @login_required
-@user_passes_test(lambda u: is_admin(u) or is_supervisor(u))
+@user_passes_test(_is_superadmin)
 def usuario_create(request):
     if request.method == "POST":
         form = UsuarioCreateForm(request.POST)
@@ -67,7 +69,7 @@ def usuario_create(request):
 
 
 @login_required
-@user_passes_test(lambda u: is_admin(u) or is_supervisor(u))
+@user_passes_test(_is_superadmin)
 def usuario_update(request, pk):
     obj = get_object_or_404(User, pk=pk)
 
@@ -92,7 +94,7 @@ def usuario_update(request, pk):
 
 
 @login_required
-@user_passes_test(lambda u: is_admin(u) or is_supervisor(u))
+@user_passes_test(_is_superadmin)
 def usuario_delete(request, pk):
     obj = get_object_or_404(User, pk=pk)
 

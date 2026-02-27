@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}{% if modo == 'editar' %}Editar usuario{% else %}Nuevo usuario{% endif %} | Pañol ERP{% endblock %}
+{% block title %}{% if modo == 'editar' %}Editar usuario{% else %}Nuevo usuario{% endif %} | La Termal ERP{% endblock %}
 {% block page_title %}Administración{% endblock %}
-{% block page_subtitle %}Usuarios y roles (base).{% endblock %}
+{% block page_subtitle %}Usuarios, roles y accesos (solo superusuario).{% endblock %}
 
 {% block content %}
 
@@ -41,10 +41,9 @@
       </div>
     {% endif %}
 
-    
     <div class="ti-card p-4">
       <div class="text-sm font-semibold">Rol</div>
-      <div class="text-xs ti-subtitle">Define qué módulos ve el usuario (menú y permisos).</div>
+      <div class="text-xs ti-subtitle">Perfil principal del usuario.</div>
       <div class="mt-3">
         <label class="ti-label" for="{{ form.role.id_for_label }}">{{ form.role.label }}</label>
         {{ form.role }}
@@ -52,7 +51,17 @@
       </div>
     </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div class="ti-card p-4">
+      <div class="text-sm font-semibold">Módulos</div>
+      <div class="text-xs ti-subtitle">Accesos adicionales por módulo (sin cambiar el rol).</div>
+      <div class="mt-3 space-y-2">
+        {{ form.modules }}
+        {% if form.modules.errors %}<div class="ti-error">{{ form.modules.errors|striptags }}</div>{% endif %}
+        <div class="text-xs ti-subtitle">Ejemplo: Taller con lectura de stock (Inventario lectura) sin habilitar edición.</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div>
         <label class="ti-label" for="{{ form.username.id_for_label }}">Usuario</label>
         {{ form.username }}
@@ -93,7 +102,7 @@
           {{ form.is_staff }}
           <label for="{{ form.is_staff.id_for_label }}" class="text-sm font-semibold">Staff</label>
         </div>
-        <div class="text-xs ti-subtitle mt-1">Permite acceder a paneles internos (no es superusuario).</div>
+        <div class="text-xs ti-subtitle mt-1">Acceso a paneles internos (no es superusuario).</div>
         {% if form.is_staff.errors %}<div class="ti-error">{{ form.is_staff.errors|striptags }}</div>{% endif %}
       </div>
     </div>

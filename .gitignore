@@ -1,17 +1,12 @@
-﻿Set-Location "C:\Users\gabi\Desktop\2026\panol_erp"
-
-@'
-# Python / Django
+﻿# Python / Django
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
 *.log
-*.sqlite3
-db.sqlite3
-*.egg-info/
 .env
 .venv/
 venv/
+*.sqlite3
+db.sqlite3
 
 # Django static/media build artifacts
 staticfiles/
@@ -34,4 +29,7 @@ htmlcov/
 Thumbs.db
 Desktop.ini
 .DS_Store
-'@ | Set-Content -Encoding UTF8 .gitignore
+
+# Backups / patches temporales
+backup_*/
+_patch_tmp_*/

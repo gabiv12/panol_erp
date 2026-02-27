@@ -57,17 +57,65 @@ def _day_bounds(day: datetime.date):
     return start, end
 
 
+def _day_has_salidas(day: datetime.date) -> bool:
+    start, end = _day_bounds(day)
+    return SalidaProgramada.objects.filter(salida_programada__gte=start, salida_programada__lt=end).exists()
+
+
+def _latest_day_with_salidas() -> datetime.date | None:
+    last = SalidaProgramada.objects.order_by("-salida_programada").values_list("salida_programada", flat=True).first()
+    if not last:
+        return None
+    try:
+        dt_last = timezone.localtime(last)
+        return dt_last.date()
+    except Exception:
+        return None
+
+
 def _default_day_for_diagramador() -> datetime.date:
     """
-    Heurística operativa:
-    - Si es tarde (>=18hs), normalmente se arma el diagrama del día siguiente.
-    - Si es temprano, se arma/consulta el del día actual.
+    Heurística operativa robusta (evita pantallas vacías):
+    - Preferido:
+        - >=18hs: mañana
+        - <18hs: hoy
+    - Si el día preferido NO tiene salidas y el usuario NO eligió fecha:
+        - cae al último día que tenga salidas (si existe).
     """
     now = timezone.localtime(timezone.now())
     base = timezone.localdate()
-    if now.hour >= 18:
-        return base + timedelta(days=1)
-    return base
+    preferred = base + timedelta(days=1) if now.hour >= 18 else base
+
+    if _day_has_salidas(preferred):
+        return preferred
+
+    last = _latest_day_with_salidas()
+    return last or preferred
+
+
+def _resolve_day_from_request(request) -> tuple[datetime.date, bool]:
+    """
+    Devuelve (day, explicit):
+    - explicit=True si el usuario eligió ?fecha=YYYY-MM-DD
+    - explicit=False si usamos default.
+    """
+    fecha = (request.GET.get("fecha") or "").strip()
+    if fecha:
+        day = _parse_day(fecha)
+        return day, True
+    return _default_day_for_diagramador(), False
+
+
+def _resolve_day_for_views(request, preferred: datetime.date) -> datetime.date:
+    """
+    Si el usuario NO eligió fecha y el día preferido está vacío, cae al último día con salidas.
+    """
+    day, explicit = _resolve_day_from_request(request)
+    if explicit:
+        return day
+    return day or preferred
+
+
 
 
 def _salidas_datalists():
@@ -181,9 +229,8 @@ class SalidaProgramadaListView(LoginRequiredMixin, PermissionRequiredMixin, List
                 | (models.Q(nota__icontains=q))
             )
 
-        # Fecha (por defecto: heurística de diagramador)
-        fecha = (self.request.GET.get("fecha") or "").strip()
-        day = _parse_day(fecha) if fecha else _default_day_for_diagramador()
+        # Fecha (por defecto: heurística robusta)
+        day, _explicit = _resolve_day_from_request(self.request)
 
         start, end = _day_bounds(day)
         qs = qs.filter(salida_programada__gte=start, salida_programada__lt=end)
@@ -193,7 +240,8 @@ class SalidaProgramadaListView(LoginRequiredMixin, PermissionRequiredMixin, List
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["q"] = (self.request.GET.get("q") or "").strip()
-        ctx["fecha"] = (self.request.GET.get("fecha") or "").strip() or str(_default_day_for_diagramador())
+        day, _explicit = _resolve_day_from_request(self.request)
+        ctx["fecha"] = str(day)
         try:
             ct = ContentType.objects.get_for_model(SalidaProgramada)
             ctx["salida_log"] = (
@@ -225,7 +273,8 @@ class SalidaProgramadaCreateView(LoginRequiredMixin, PermissionRequiredMixin, Cr
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_salidas_datalists())
-        ctx["fecha"] = (self.request.GET.get("fecha") or "").strip() or str(_default_day_for_diagramador())
+        day, _explicit = _resolve_day_from_request(self.request)
+        ctx["fecha"] = str(day)
         try:
             ct = ContentType.objects.get_for_model(SalidaProgramada)
             ctx["salida_log"] = (
@@ -251,7 +300,8 @@ class SalidaProgramadaUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Up
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx.update(_salidas_datalists())
-        ctx["fecha"] = (self.request.GET.get("fecha") or "").strip() or str(_default_day_for_diagramador())
+        day, _explicit = _resolve_day_from_request(self.request)
+        ctx["fecha"] = str(day)
         try:
             ct = ContentType.objects.get_for_model(SalidaProgramada)
             ctx["salida_log"] = (
@@ -736,7 +786,8 @@ def api_colectivo_info(request):
 @permission_required("flota.change_salidaprogramada", raise_exception=True)
 def diagrama_edit(request):
     """Editor rápido del diagrama del día (bulk edit)."""
-    day = _parse_day((request.GET.get("fecha") or "").strip() or str(_default_day_for_diagramador()))
+    day, _explicit = _resolve_day_from_request(request)
+    day = day
     start, end = _day_bounds(day)
 
     qs = (
@@ -801,8 +852,8 @@ def diagrama_edit(request):
 
 def diagrama_print(request):
     """Vista imprimible del diagrama del día (similar a la planilla en papel)."""
-    fecha = (request.GET.get("fecha") or "").strip()
-    day = _parse_day(fecha) if fecha else _default_day_for_diagramador()
+    day, _explicit = _resolve_day_from_request(request)
+    day = day
 
     start, end = _day_bounds(day)
 
@@ -821,23 +872,71 @@ def diagrama_print(request):
     return render(request, "flota/diagrama_print.html", {"day": day, "grupos": grupos})
 
 
+
+@login_required
+@permission_required("flota.view_salidaprogramada", raise_exception=True)
+def salidas_dual(request):
+    """
+    Vista operativa para diagramador: hoy y mañana en paralelo.
+    - Si ?fecha=YYYY-MM-DD => la izquierda es esa fecha y la derecha es +1 día.
+    - Si no hay datos, cae al último día con salidas para no quedar vacío.
+    """
+    base_day, explicit = _resolve_day_from_request(request)
+    if (not explicit) and (not _day_has_salidas(base_day)):
+        last = _latest_day_with_salidas()
+        if last:
+            base_day = last
+
+    day_a = base_day
+    day_b = base_day + timedelta(days=1)
+
+    start_a, end_a = _day_bounds(day_a)
+    start_b, end_b = _day_bounds(day_b)
+
+    salidas_a = (
+        SalidaProgramada.objects.select_related("colectivo")
+        .filter(salida_programada__gte=start_a, salida_programada__lt=end_a)
+        .order_by("salida_programada", "id")
+    )
+    salidas_b = (
+        SalidaProgramada.objects.select_related("colectivo")
+        .filter(salida_programada__gte=start_b, salida_programada__lt=end_b)
+        .order_by("salida_programada", "id")
+    )
+
+    return render(
+        request,
+        "flota/salida_dual.html",
+        {
+            "day_a": day_a,
+            "day_b": day_b,
+            "salidas_a": salidas_a,
+            "salidas_b": salidas_b,
+        },
+    )
+
+
 @login_required
 def tv_horarios(request):
     """
-    Pantalla TV: próximas salidas.
-    - Se refresca sola (meta refresh) pero evitamos texto distractor.
-    - El rango se limita para mantener la pantalla "limpia".
+    Pantalla "TV Horarios" (diagrama por fecha):
+    - Por defecto: heurística de diagramador (>=18: mañana).
+    - Si ese día no tiene salidas, cae al último día con salidas.
+    - Permite override: ?fecha=YYYY-MM-DD
     """
     now = timezone.localtime(timezone.now())
 
-    horizon_h = int((request.GET.get("hours") or "12").strip() or "12")
-    horizon_h = max(1, min(horizon_h, 72))
+    day, explicit = _resolve_day_from_request(request)
+    if (not explicit) and (not _day_has_salidas(day)):
+        last = _latest_day_with_salidas()
+        if last:
+            day = last
 
-    end = now + timedelta(hours=horizon_h)
+    start, end = _day_bounds(day)
 
     salidas = (
         SalidaProgramada.objects.select_related("colectivo")
-        .filter(salida_programada__gte=now - timedelta(minutes=60), salida_programada__lte=end)
+        .filter(salida_programada__gte=start, salida_programada__lt=end)
         .order_by("salida_programada", "id")
     )
 
@@ -847,7 +946,7 @@ def tv_horarios(request):
         {
             "salidas": salidas,
             "now": now,
-            "hours": horizon_h,
+            "day": day,
             "refresh_sec": 20,
         },
     )

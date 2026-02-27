@@ -9,7 +9,7 @@ como **Grupos** de Django y los inicializamos con el comando:
   python manage.py init_roles
 
 Los permisos finos se asignan por grupo, y el UI de "Administración > Usuarios"
-permite seleccionar el rol.
+permite seleccionar el rol y **accesos adicionales por módulo** (solo superusuario).
 
 Importante
 ----------
@@ -20,8 +20,11 @@ Importante
 from __future__ import annotations
 
 from django.contrib.auth.models import Group
-from django.db.models import Q
 
+
+# ---------------------------------------------------------------------
+# Roles (por grupo)
+# ---------------------------------------------------------------------
 
 # Roles históricos (no romper nombres ya usados)
 ROLE_ADMIN = "ADMIN"                # equivalencia: Gerencia / Admin principal
@@ -30,19 +33,17 @@ ROLE_PANOLERO = "PANOLERO"          # equivalencia: Pañol / Inventario
 ROLE_MECANICO = "MECANICO"          # equivalencia: Taller
 ROLE_CHOFER = "CHOFER"              # equivalencia: Chofer (carga partes)
 
-# Nuevos roles (opcionales)
-ROLE_ADMINISTRACION = "ADMINISTRACION"  # compras + reportes + carga administrativa (cuando exista)
-
+# Nuevo rol (existía como placeholder, ahora se usa para carga de inventario/proveedores)
+ROLE_ADMINISTRACION = "ADMINISTRACION"  # cajero / proveedores (carga ingresos)
 
 ROLE_CHOICES = [
     (ROLE_ADMIN, "Gerencia (acceso total)"),
     (ROLE_SUPERVISOR, "Diagramación / Coordinación"),
     (ROLE_MECANICO, "Taller"),
-    (ROLE_CHOFER, "Chofer"),
+    (ROLE_CHOFER, "Chofer (solo partes + diagrama)"),
     (ROLE_PANOLERO, "Pañol / Inventario"),
-    (ROLE_ADMINISTRACION, "Administración"),
+    (ROLE_ADMINISTRACION, "Administración / Proveedores (carga ingresos)"),
 ]
-
 
 ROLE_GROUPS = {
     ROLE_ADMIN: "GERENCIA",
@@ -68,9 +69,6 @@ def _in_group(user, group_name: str) -> bool:
     return user.groups.filter(name=group_name).exists()
 
 
-# ---------------------------------------------------------------------
-# Helpers de compatibilidad (no romper imports viejos)
-# ---------------------------------------------------------------------
 def is_admin(user) -> bool:
     """Gerencia/Admin. Superuser siempre cuenta como admin."""
     return _in_group(user, ROLE_GROUPS[ROLE_ADMIN])
@@ -124,9 +122,70 @@ def user_role(user) -> str:
     if getattr(user, "is_superuser", False):
         return ROLE_ADMIN
 
-    # prioridad manual
     priority = [ROLE_ADMIN, ROLE_SUPERVISOR, ROLE_PANOLERO, ROLE_MECANICO, ROLE_CHOFER, ROLE_ADMINISTRACION]
     for r in priority:
         if user.groups.filter(name=ROLE_GROUPS[r]).exists():
             return r
     return ROLE_CHOFER
+
+
+# ---------------------------------------------------------------------
+# Accesos adicionales por módulo (por grupo)
+# ---------------------------------------------------------------------
+
+MOD_FLOTA_VIEW = "MOD_FLOTA_VIEW"
+MOD_INVENTARIO_VIEW = "MOD_INVENTARIO_VIEW"
+MOD_INVENTARIO_EDIT = "MOD_INVENTARIO_EDIT"
+MOD_TV = "MOD_TV"
+
+MODULE_CHOICES = [
+    (MOD_FLOTA_VIEW, "Flota (lectura)"),
+    (MOD_INVENTARIO_VIEW, "Inventario (lectura)"),
+    (MOD_INVENTARIO_EDIT, "Inventario (carga: alta/edición)"),
+    (MOD_TV, "Pantallas TV"),
+]
+
+MODULE_GROUPS = {
+    MOD_FLOTA_VIEW: "ACC_FLOTA_VIEW",
+    MOD_INVENTARIO_VIEW: "ACC_INVENTARIO_VIEW",
+    MOD_INVENTARIO_EDIT: "ACC_INVENTARIO_EDIT",
+    MOD_TV: "ACC_TV",
+}
+
+
+def module_group_name(module_key: str) -> str:
+    return MODULE_GROUPS[module_key]
+
+
+def set_module_groups(user, module_keys: list[str]) -> None:
+    """Asigna accesos adicionales por módulo.
+
+    - Remueve SOLO los grupos de módulo conocidos (MODULE_GROUPS).
+    - Agrega los seleccionados.
+    """
+    if not user:
+        return
+    allowed = set(MODULE_GROUPS.keys())
+    selected = [k for k in (module_keys or []) if k in allowed]
+
+    mod_group_names = list(MODULE_GROUPS.values())
+    user.groups.remove(*Group.objects.filter(name__in=mod_group_names))
+
+    for k in selected:
+        gname = MODULE_GROUPS[k]
+        g, _ = Group.objects.get_or_create(name=gname)
+        user.groups.add(g)
+
+
+def user_modules(user) -> list[str]:
+    """Devuelve lista de module keys presentes según grupos."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return []
+    if getattr(user, "is_superuser", False):
+        return [k for k in MODULE_GROUPS.keys()]
+    user_group_names = set(user.groups.values_list("name", flat=True))
+    out = []
+    for k, gname in MODULE_GROUPS.items():
+        if gname in user_group_names:
+            out.append(k)
+    return out

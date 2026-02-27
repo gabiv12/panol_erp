@@ -34,6 +34,8 @@
 
       <a class="ti-btn" href="{% url 'flota:tv_horarios' %}" target="_blank" rel="noopener">Pantalla TV</a>
 
+      <a class="ti-btn" href="{% url 'flota:salida_dual' %}?fecha={{ fecha|urlencode }}">Hoy + mañana</a>
+
       <form method="post" action="{% url 'flota:salida_copy_prev_day' %}" class="inline">
         {% csrf_token %}
         <input type="hidden" name="fecha" value="{{ fecha }}">

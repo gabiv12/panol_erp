@@ -34,6 +34,7 @@ urlpatterns = [
 
     # Horarios / Diagrama
     path("salidas/", salidas_views.SalidaProgramadaListView.as_view(), name="salida_list"),
+    path("salidas/doble/", salidas_views.salidas_dual, name="salida_dual"),
     path("salidas/nuevo/", salidas_views.SalidaProgramadaCreateView.as_view(), name="salida_create"),
     path("salidas/<int:pk>/editar/", salidas_views.SalidaProgramadaUpdateView.as_view(), name="salida_update"),
     path("salidas/<int:pk>/eliminar/", salidas_views.SalidaProgramadaDeleteView.as_view(), name="salida_delete"),
