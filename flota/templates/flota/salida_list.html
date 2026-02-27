@@ -1,128 +1,185 @@
 {% extends "base.html" %}
-{% load static %}
 
-{% block title %}Horarios | Flota{% endblock %}
+{% block title %}Horarios | La Termal ERP{% endblock %}
 {% block page_title %}Horarios{% endblock %}
 {% block page_subtitle %}Salidas programadas y viajes especiales{% endblock %}
 
 {% block content %}
 
-<section class="ti-card p-4 space-y-4">
+<div class="ti-card p-4 space-y-4">
 
-  <form method="get" class="space-y-3">
+  {% url 'flota:salida_add' as url_add %}
+  {% url 'flota:salida_diagrama_edit' as url_diagrama_edit %}
+  {% url 'flota:salida_dual' as url_dual %}
+  {% url 'flota:tv_horarios' as url_tv %}
+  {% url 'flota:salida_copy_prev_day' as url_copy_prev %}
+  {% url 'flota:salida_print' as url_print %}
+
+  <!-- Filtros (GET) -->
+  <form method="get" class="space-y-3" id="salidasFilterForm">
     <div>
-      <label class="text-xs ti-subtitle">Buscar</label>
-      <input name="q" value="{{ q }}" class="ti-input w-full" placeholder="Unidad, chofer, recorrido..." />
+      <label class="ti-label">Buscar</label>
+      <input class="ti-field" name="q" value="{{ q|default:'' }}" placeholder="Unidad, chofer, recorrido..." />
     </div>
 
     <div>
-      <label class="text-xs ti-subtitle">Fecha</label>
-      <input type="date" name="fecha" value="{{ fecha }}" class="ti-input w-full" />
-      <div class="mt-2 flex flex-wrap gap-2">
+      <label class="ti-label">Fecha</label>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input type="date" class="ti-field" id="salidasFecha" name="fecha" value="{{ fecha }}" />
+
+        <button type="submit" class="ti-btn-primary">Filtrar</button>
         <button type="button" class="ti-btn" data-set-date="today">Hoy</button>
         <button type="button" class="ti-btn" data-set-date="tomorrow">Mañana</button>
       </div>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-2">
-      <button class="ti-btn-primary" type="submit">Filtrar</button>
-
-      <a class="ti-btn" href="{% url 'flota:salida_create' %}?fecha={{ fecha|urlencode }}">Nueva salida</a>
-
-      <a class="ti-btn" href="{% url 'flota:salida_diagrama_print' %}?fecha={{ fecha|urlencode }}" target="_blank" rel="noopener">Imprimir</a>
-          <a class="ti-btn" href="{% url 'flota:salida_diagrama_edit' %}?fecha={{ fecha|date:'Y-m-d'|urlencode }}">Editar diagrama</a>
-
-      <a class="ti-btn" href="{% url 'flota:tv_horarios' %}" target="_blank" rel="noopener">Pantalla TV</a>
-
-      <a class="ti-btn" href="{% url 'flota:salida_dual' %}?fecha={{ fecha|urlencode }}">Hoy + mañana</a>
-
-      <form method="post" action="{% url 'flota:salida_copy_prev_day' %}" class="inline">
-        {% csrf_token %}
-        <input type="hidden" name="fecha" value="{{ fecha }}">
-        <button type="submit" class="ti-btn" id="btnCopyPrevDay">Copiar día anterior</button>
-      </form>
+      <p class="ti-help">Consejo: filtrá por interno, chofer o recorrido.</p>
     </div>
   </form>
 
-  <div class="ti-card p-0 overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="text-left">
-            <th class="px-3 py-2">Hora</th>
-            <th class="px-3 py-2">Unidad</th>
-            <th class="px-3 py-2">Tipo</th>
-            <th class="px-3 py-2">Estado</th>
-            <th class="px-3 py-2">Sección / Etiqueta</th>
-            <th class="px-3 py-2">Regreso</th>
-            <th class="px-3 py-2">Chofer</th>
-            <th class="px-3 py-2">Recorrido</th>
-            <th class="px-3 py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for s in salidas %}
-            <tr class="border-t border-slate-200 dark:border-slate-800">
-              <td class="px-3 py-2 whitespace-nowrap">{{ s.salida_programada|date:"H:i" }}</td>
-              <td class="px-3 py-2 whitespace-nowrap">
-                <div class="font-semibold">Interno {{ s.colectivo.interno }}</div>
-                <div class="text-xs ti-subtitle">{{ s.colectivo.dominio }}</div>
-              </td>
-              <td class="px-3 py-2">{{ s.get_tipo_display }}</td>
-              <td class="px-3 py-2">{{ s.get_estado_display }}</td>
-              <td class="px-3 py-2">
-                <div class="text-xs ti-subtitle">{{ s.seccion }}</div>
-                <div class="font-semibold">{{ s.salida_label }}</div>
-              </td>
-              <td class="px-3 py-2">{{ s.regreso }}</td>
-              <td class="px-3 py-2">{{ s.chofer }}</td>
-              <td class="px-3 py-2">{{ s.recorrido }}</td>
-              <td class="px-3 py-2 text-right whitespace-nowrap">
-                <a class="ti-btn" href="{% url 'flota:salida_update' s.id %}?fecha={{ fecha|urlencode }}">Editar</a>
-                <a class="ti-btn" href="{% url 'flota:salida_delete' s.id %}?fecha={{ fecha|urlencode }}">Eliminar</a>
-              </td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td class="px-3 py-6 text-center ti-subtitle" colspan="9">No hay salidas para esa fecha.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <!-- Acciones -->
+  <div class="flex flex-wrap gap-2 pt-2">
+    <a href="{{ url_add }}?fecha={{ fecha }}" class="ti-btn-primary">Nueva salida</a>
+    <a href="{{ url_print }}?fecha={{ fecha }}" class="ti-btn">Imprimir</a>
+    <a href="{{ url_diagrama_edit }}?fecha={{ fecha }}" class="ti-btn">Editar diagrama</a>
+    <a href="{{ url_tv }}?fecha={{ fecha }}" class="ti-btn">Pantalla TV</a>
+    <a href="{{ url_dual }}?fecha={{ fecha }}" class="ti-btn">Hoy + mañana</a>
+
+    <form method="post" action="{{ url_copy_prev }}" class="inline" data-ti-confirm-form>
+      {% csrf_token %}
+      <input type="hidden" name="fecha" value="{{ fecha }}" />
+      <button type="button" class="ti-btn" data-ti-confirm-open
+              data-ti-title="Copiar día anterior"
+              data-ti-body="¿Copiar todas las salidas del día anterior a esta fecha? Si ya existen algunas, se omiten duplicados.">
+        Copiar día anterior
+      </button>
+    </form>
   </div>
 
-</section>
+</div>
+
+<div class="ti-card mt-4 overflow-hidden">
+  <table class="ti-table">
+    <thead class="ti-thead">
+      <tr>
+        <th class="ti-th">Hora</th>
+        <th class="ti-th">Unidad</th>
+        <th class="ti-th">Tipo</th>
+        <th class="ti-th">Estado</th>
+        <th class="ti-th">Sección / Etiqueta</th>
+        <th class="ti-th">Regreso</th>
+        <th class="ti-th">Chofer</th>
+        <th class="ti-th">Recorrido</th>
+        <th class="ti-th text-right">Acciones</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for s in salidas %}
+        <tr class="ti-tr {% if s.tipo == 'ESPECIAL' %}bg-amber-50/60 dark:bg-amber-950/20{% endif %}">
+          <td class="ti-td font-semibold tabular-nums">{{ s.salida_programada|date:"H:i" }}</td>
+          <td class="ti-td">
+            <div class="font-semibold">Interno {{ s.colectivo.interno }}</div>
+            <div class="ti-subtitle">{{ s.colectivo.dominio }}</div>
+          </td>
+          <td class="ti-td">{{ s.get_tipo_display }}</td>
+          <td class="ti-td">{{ s.get_estado_display }}</td>
+          <td class="ti-td">
+            <div class="font-semibold">{{ s.seccion }}</div>
+            <div class="ti-subtitle">{{ s.salida_label }}</div>
+          </td>
+          <td class="ti-td">{{ s.regreso|default:"—" }}</td>
+          <td class="ti-td">{{ s.chofer|default:"—" }}</td>
+          <td class="ti-td">{{ s.recorrido|default:"—" }}</td>
+          <td class="ti-td text-right">
+            <a href="{% url 'flota:salida_update' s.pk %}?fecha={{ fecha }}" class="ti-btn">Editar</a>
+            <a href="{% url 'flota:salida_delete' s.pk %}?fecha={{ fecha }}" class="ti-btn-danger">Eliminar</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="9" class="ti-td text-center ti-subtitle py-10">
+            No hay salidas para esa fecha. Si recién empezás, primero cargá Unidades/Choferes y luego corré el seed de horarios fijos.
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal interno: reemplazo de confirm() del navegador -->
+<div id="tiConfirmOverlay" class="fixed inset-0 z-[60] hidden bg-slate-900/50"></div>
+<div id="tiConfirmModal" class="fixed inset-0 z-[61] hidden items-center justify-center p-4">
+  <div class="ti-card w-full max-w-lg p-4">
+    <div class="text-base font-semibold" id="tiConfirmTitle">Confirmar</div>
+    <div class="ti-subtitle mt-2" id="tiConfirmBody">—</div>
+
+    <div class="mt-4 flex justify-end gap-2">
+      <button type="button" class="ti-btn" id="tiConfirmCancel">Cancelar</button>
+      <button type="button" class="ti-btn-primary" id="tiConfirmOk">Aceptar</button>
+    </div>
+  </div>
+</div>
 
 <script>
-  (function() {
-    const btns = document.querySelectorAll("[data-set-date]");
-    const dateInput = document.querySelector('input[name="fecha"]');
-    if (!dateInput) return;
+(function(){
+  // Hoy / Mañana (sin romper el formato del input type=date)
+  var fechaInput = document.getElementById('salidasFecha');
+  var form = document.getElementById('salidasFilterForm');
 
-    function fmt(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${dd}`;
-    }
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function toISO(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
 
-    btns.forEach(b => {
-      b.addEventListener("click", () => {
-        const now = new Date();
-        if (b.dataset.setDate === "tomorrow") now.setDate(now.getDate() + 1);
-        dateInput.value = fmt(now);
-      });
-    });
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('[data-set-date]');
+    if (!btn || !fechaInput || !form) return;
+    e.preventDefault();
+    var v = btn.getAttribute('data-set-date');
+    var d = new Date();
+    if (v === 'tomorrow') d.setDate(d.getDate() + 1);
+    fechaInput.value = toISO(d);
+    form.submit();
+  });
 
-    const copyBtn = document.getElementById("btnCopyPrevDay");
-    if (copyBtn) {
-      copyBtn.addEventListener("click", (e) => {
-        const ok = confirm("¿Copiar todas las salidas del día anterior a esta fecha? Si ya existen algunas, se omiten duplicados.");
-        if (!ok) e.preventDefault();
-      });
-    }
-  })();
+  // Confirm interno (copiar día anterior)
+  var overlay = document.getElementById('tiConfirmOverlay');
+  var modal = document.getElementById('tiConfirmModal');
+  var titleEl = document.getElementById('tiConfirmTitle');
+  var bodyEl = document.getElementById('tiConfirmBody');
+  var btnOk = document.getElementById('tiConfirmOk');
+  var btnCancel = document.getElementById('tiConfirmCancel');
+  var pendingForm = null;
+
+  function openModal(title, body, formEl){
+    pendingForm = formEl;
+    titleEl.textContent = title || 'Confirmar';
+    bodyEl.textContent = body || '¿Continuar?';
+    overlay.classList.remove('hidden');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeModal(){
+    pendingForm = null;
+    overlay.classList.add('hidden');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('[data-ti-confirm-open]');
+    if (!btn) return;
+    e.preventDefault();
+    var f = btn.closest('form');
+    if (!f) return;
+    openModal(btn.getAttribute('data-ti-title'), btn.getAttribute('data-ti-body'), f);
+  });
+
+  btnCancel.addEventListener('click', function(){ closeModal(); });
+  overlay.addEventListener('click', function(){ closeModal(); });
+  btnOk.addEventListener('click', function(){
+    if (pendingForm) pendingForm.submit();
+    closeModal();
+  });
+})();
 </script>
 
 {% endblock %}

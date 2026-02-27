@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 """
 flota.salidas_views
@@ -57,9 +57,35 @@ def _day_bounds(day: datetime.date):
     return start, end
 
 
-def _day_has_salidas(day: datetime.date) -> bool:
+def _qs_for_day(day: datetime.date, q: str = ""):
+    """Queryset de salidas del día.
+
+    Incluye ESPECIALES multi-día mientras no hayan llegado (llegada_programada).
+    """
     start, end = _day_bounds(day)
-    return SalidaProgramada.objects.filter(salida_programada__gte=start, salida_programada__lt=end).exists()
+    normal_q = models.Q(salida_programada__gte=start, salida_programada__lt=end)
+    overlap_special_q = models.Q(
+        tipo=SalidaProgramada.Tipo.ESPECIAL,
+        llegada_programada__isnull=False,
+        salida_programada__lt=end,
+        llegada_programada__gte=start,
+    )
+    qs = SalidaProgramada.objects.filter(normal_q | overlap_special_q)
+    if q:
+        q = q.strip()
+        if q:
+            qs = qs.filter(
+                models.Q(colectivo__interno__icontains=q)
+                | models.Q(chofer__icontains=q)
+                | models.Q(recorrido__icontains=q)
+                | models.Q(seccion__icontains=q)
+                | models.Q(salida_label__icontains=q)
+            )
+    return qs.select_related("colectivo").order_by("salida_programada", "id")
+
+
+def _day_has_salidas(day: datetime.date) -> bool:
+    return _qs_for_day(day).exists()
 
 
 def _latest_day_with_salidas() -> datetime.date | None:
@@ -233,7 +259,15 @@ class SalidaProgramadaListView(LoginRequiredMixin, PermissionRequiredMixin, List
         day, _explicit = _resolve_day_from_request(self.request)
 
         start, end = _day_bounds(day)
-        qs = qs.filter(salida_programada__gte=start, salida_programada__lt=end)
+        # Incluye ESPECIALES que se solapan (viajes multi-día)
+        normal_q = models.Q(salida_programada__gte=start, salida_programada__lt=end)
+        overlap_special_q = models.Q(
+            tipo=SalidaProgramada.Tipo.ESPECIAL,
+            llegada_programada__isnull=False,
+            salida_programada__lt=end,
+            llegada_programada__gte=start,
+        )
+        qs = qs.filter(normal_q | overlap_special_q)
 
         return qs.order_by("salida_programada", "id")
 
@@ -931,14 +965,7 @@ def tv_horarios(request):
         last = _latest_day_with_salidas()
         if last:
             day = last
-
-    start, end = _day_bounds(day)
-
-    salidas = (
-        SalidaProgramada.objects.select_related("colectivo")
-        .filter(salida_programada__gte=start, salida_programada__lt=end)
-        .order_by("salida_programada", "id")
-    )
+    salidas = _qs_for_day(day)
 
     return render(
         request,

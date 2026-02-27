@@ -18,18 +18,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Test / tooling
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-
-# OS
-Thumbs.db
-Desktop.ini
+# OS / editor / backups
 .DS_Store
-
-# Backups / patches temporales
 backup_*/
-_patch_tmp_*/
+_patch_apply_*/
+*.zip
+seed/*.json

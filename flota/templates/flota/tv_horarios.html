@@ -1,86 +1,82 @@
 {% load static %}
 <!doctype html>
-<html lang="es" class="dark">
+<html lang="es" class="h-full dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="refresh" content="{{ refresh_sec }}">
-  <title>Horarios (TV) | La Termal ERP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="20">
+  <title>TV Horarios | La Termal ERP</title>
   <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}">
 </head>
-<body class="min-h-screen overflow-hidden" class="min-h-screen bg-slate-950 text-slate-100">
-  <header class="px-6 py-4 border-b border-slate-800 flex items-end justify-between">
+
+<body class="min-h-screen bg-slate-950 text-slate-100 overflow-hidden">
+
+  <header class="px-6 py-5 flex items-end justify-between gap-6 border-b border-slate-800">
     <div>
-      <div class="text-xl font-bold">Horarios</div>
-      <div class="text-xs text-slate-400">Próximas {{ hours }} horas</div>
+      <h1 class="text-4xl font-semibold leading-tight">Horarios</h1>
+      <div class="ti-subtitle text-base mt-1">Diagrama del {{ day|date:"d/m/Y" }}</div>
     </div>
-    <div class="text-xs text-slate-400">{{ now|date:"d/m/Y H:i" }}</div>
+
+    <div class="flex items-center gap-3">
+      <span class="ti-badge-muted tabular-nums" data-clock>--:--:--</span>
+      <button id="fullscreen" type="button" class="ti-btn">Pantalla completa</button>
+    </div>
   </header>
 
-  <div id="fs_overlay" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
-  <button id="fs_btn" class="ti-btn-primary text-base px-6 py-4">Pantalla completa</button>
-</div>
+  <main class="p-6">
+    <div class="ti-card overflow-hidden">
+      <table class="ti-table">
+        <thead class="ti-thead">
+          <tr>
+            <th class="ti-th">Hora</th>
+            <th class="ti-th">Unidad</th>
+            <th class="ti-th">Sección / Etiqueta</th>
+            <th class="ti-th">Regreso</th>
+            <th class="ti-th">Chofer</th>
+            <th class="ti-th">Recorrido</th>
+          </tr>
+        </thead>
 
-<main class="p-6">
-    <section class="ti-card p-0 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="text-left">
-              <th class="px-4 py-3">Hora</th>
-              <th class="px-4 py-3">Unidad</th>
-              <th class="px-4 py-3">Sección / Etiqueta</th>
-              <th class="px-4 py-3">Regreso</th>
-              <th class="px-4 py-3">Chofer</th>
-              <th class="px-4 py-3">Recorrido</th>
+        <tbody>
+          {% for s in salidas %}
+            <tr class="ti-tr {% if s.tipo == 'ESPECIAL' %}bg-amber-950/25{% endif %}">
+              <td class="ti-td font-semibold tabular-nums">{{ s.salida_programada|date:"H:i" }}</td>
+              <td class="ti-td">
+                <div class="font-semibold">Int {{ s.colectivo.interno }}</div>
+                <div class="ti-subtitle">{{ s.colectivo.dominio }}</div>
+              </td>
+              <td class="ti-td">
+                <div class="font-semibold">{{ s.seccion }}</div>
+                <div class="ti-subtitle">{{ s.salida_label }}</div>
+              </td>
+              <td class="ti-td">{{ s.regreso|default:"—" }}</td>
+              <td class="ti-td">{{ s.chofer|default:"—" }}</td>
+              <td class="ti-td">{{ s.recorrido|default:"—" }}</td>
             </tr>
-          </thead>
-          <tbody>
-            {% for s in salidas %}
-              <tr class="border-t border-slate-800">
-                <td class="px-4 py-3 whitespace-nowrap text-lg font-semibold">{{ s.salida_programada|date:"H:i" }}</td>
-                <td class="px-4 py-3 whitespace-nowrap">
-                  <div class="text-lg font-semibold">Interno {{ s.colectivo.interno }}</div>
-                  <div class="text-xs text-slate-400">{{ s.colectivo.dominio }}</div>
-                </td>
-                <td class="px-4 py-3">
-                  <div class="text-xs text-slate-400">{{ s.seccion }}</div>
-                  <div class="text-base font-semibold">{{ s.salida_label }}</div>
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap">{{ s.regreso }}</td>
-                <td class="px-4 py-3">{{ s.chofer }}</td>
-                <td class="px-4 py-3">{{ s.recorrido }}</td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td class="px-4 py-10 text-center text-slate-400" colspan="6">No hay salidas en el rango.</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </section>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="ti-td text-center ti-subtitle py-10">No hay salidas para este día.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </main>
-<script>
-(function () {
-  const overlay = document.getElementById('fs_overlay');
-  const btn = document.getElementById('fs_btn');
-  if (!overlay || !btn) return;
 
-  function hide() { overlay.style.display = 'none'; }
-
-  btn.addEventListener('click', async function () {
-    try {
-      if (document.fullscreenElement) { hide(); return; }
-      await document.documentElement.requestFullscreen();
-      hide();
-    } catch (e) {
-      hide();
-    }
-  });
-
-  if (document.fullscreenElement) hide();
-})();
-</script>
+  <script src="{% static 'js/app.js' %}" defer></script>
+  <script>
+    (function(){
+      var btn = document.getElementById('fullscreen');
+      if (!btn) return;
+      btn.addEventListener('click', function(){
+        var el = document.documentElement;
+        if (document.fullscreenElement) {
+          document.exitFullscreen && document.exitFullscreen();
+        } else {
+          el.requestFullscreen && el.requestFullscreen();
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

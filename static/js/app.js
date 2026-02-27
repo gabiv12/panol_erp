@@ -1,3 +1,117 @@
+
+  // ---------------------------
+  // Internal modal (no browser alert/confirm)
+  // ---------------------------
+  function ensureModal() {
+    var existing = qs("#tiModalOverlay");
+    if (existing) return existing;
+
+    var overlay = document.createElement("div");
+    overlay.id = "tiModalOverlay";
+    overlay.className = "fixed inset-0 z-[9999] hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4";
+
+    var panel = document.createElement("div");
+    panel.id = "tiModalPanel";
+    panel.className = "w-full max-w-lg ti-card p-4";
+
+    var title = document.createElement("div");
+    title.id = "tiModalTitle";
+    title.className = "text-base font-semibold mb-2";
+    title.textContent = "Confirmar";
+
+    var msg = document.createElement("div");
+    msg.id = "tiModalMsg";
+    msg.className = "text-sm ti-muted whitespace-pre-wrap";
+
+    var actions = document.createElement("div");
+    actions.className = "mt-4 flex items-center justify-end gap-2";
+
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.id = "tiModalCancel";
+    cancel.className = "ti-btn";
+    cancel.textContent = "Cancelar";
+
+    var ok = document.createElement("button");
+    ok.type = "button";
+    ok.id = "tiModalOk";
+    ok.className = "ti-btn-primary";
+    ok.textContent = "Aceptar";
+
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+
+    panel.appendChild(title);
+    panel.appendChild(msg);
+    panel.appendChild(actions);
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    return overlay;
+  }
+
+  function showModal(opts) {
+    var overlay = ensureModal();
+    var titleEl = qs("#tiModalTitle", overlay);
+    var msgEl = qs("#tiModalMsg", overlay);
+    var btnOk = qs("#tiModalOk", overlay);
+    var btnCancel = qs("#tiModalCancel", overlay);
+
+    titleEl.textContent = (opts && opts.title) ? opts.title : "Confirmar";
+    msgEl.textContent = (opts && opts.message) ? opts.message : "";
+
+    btnOk.textContent = (opts && opts.okText) ? opts.okText : "Aceptar";
+    btnCancel.textContent = (opts && opts.cancelText) ? opts.cancelText : "Cancelar";
+
+    var mode = (opts && opts.mode) ? opts.mode : "confirm"; // confirm|alert
+    btnCancel.classList.toggle("hidden", mode === "alert");
+
+    overlay.classList.remove("hidden");
+
+    function close() { overlay.classList.add("hidden"); cleanup(); }
+    function cleanup() {
+      overlay.removeEventListener("click", onOverlayClick, true);
+      document.removeEventListener("keydown", onKey, true);
+      btnOk.removeEventListener("click", onOk, true);
+      btnCancel.removeEventListener("click", onCancel, true);
+    }
+    function onOverlayClick(e) {
+      if (e.target === overlay) {
+        if (mode === "alert") { onOk(e); }
+        else { onCancel(e); }
+      }
+    }
+    function onKey(e) {
+      if (e.key === "Escape") {
+        if (mode === "alert") { onOk(e); }
+        else { onCancel(e); }
+      }
+    }
+
+    var resolver = (opts && opts.resolve) ? opts.resolve : function(){};
+    function onOk(e) { e && e.preventDefault(); close(); resolver(true); }
+    function onCancel(e) { e && e.preventDefault(); close(); resolver(false); }
+
+    overlay.addEventListener("click", onOverlayClick, true);
+    document.addEventListener("keydown", onKey, true);
+    btnOk.addEventListener("click", onOk, true);
+    btnCancel.addEventListener("click", onCancel, true);
+
+    setTimeout(function(){ btnOk.focus(); }, 0);
+  }
+
+  window.tiAlert = function(message, title) {
+    return new Promise(function(resolve){
+      showModal({mode:"alert", title: title || "Aviso", message: String(message || ""), okText:"Aceptar", resolve: function(){ resolve(true); }});
+    });
+  };
+
+  window.tiConfirm = function(message, title) {
+    return new Promise(function(resolve){
+      showModal({mode:"confirm", title: title || "Confirmar", message: String(message || ""), okText:"Aceptar", cancelText:"Cancelar", resolve: resolve});
+    });
+  };
 ﻿/* static/js/app.js
    UI base: drawer mobile + theme toggle + clock + progress bars
    - Robusto: soporta IDs (#drawer/#drawerOverlay) y data-attrs ([data-drawer], [data-drawer-overlay])
