@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!doctype html>
 <html lang="es" class="h-full">
 <head>
@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}La Termal ERP{% endblock %}</title>
 
-  {# CSS offline (Tailwind build local) #}
   <link rel="stylesheet" href="{% static 'css/dist/styles.css' %}" />
   <link rel="icon" type="image/svg+xml" href="{% static 'img/fondo_blanco.svg' %}" media="(prefers-color-scheme: light)" />
   <link rel="icon" type="image/svg+xml" href="{% static 'img/fondo_oscuro.svg' %}" media="(prefers-color-scheme: dark)" />
@@ -18,17 +17,13 @@
 
 <body class="h-screen overflow-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
   {% url 'login' as url_login %}
-
   {% if user.is_authenticated and request.path != url_login %}
-    
     <div class="h-screen w-screen overflow-hidden flex">
 
-      <!-- Sidebar (desktop) -->
       <aside class="hidden lg:flex w-[280px] shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
         {% include "partials/sidebar.html" %}
       </aside>
 
-      <!-- Drawer (mobile) -->
       <div id="drawerOverlay"
            class="fixed inset-0 z-50 hidden bg-slate-900/40"
            data-drawer-overlay></div>
@@ -45,10 +40,8 @@
         </div>
       </aside>
 
-      <!-- Columna principal -->
       <div class="flex-1 min-w-0 flex flex-col">
 
-        <!-- Topbar (fija) -->
         <header class="shrink-0 border-b border-slate-200 dark:border-slate-800 bg-white/85 dark:bg-slate-950/85 backdrop-blur">
           <div class="px-4 py-3 flex items-start gap-3">
             <button type="button" class="lg:hidden ti-btn" data-drawer-open>Menú</button>
@@ -60,40 +53,19 @@
 
             <div class="flex items-center gap-2 shrink-0">
               <span class="hidden sm:inline-flex ti-badge-muted tabular-nums" data-clock>--:--:--</span>
+
+              {% if request.user.is_superuser or perms.auditoria.view_auditevent %}
+                <a class="ti-btn" href="{% url 'auditoria:audit_list' %}">Auditoría</a>
+              {% endif %}
+
               <button type="button" class="ti-btn" data-theme-toggle>Claro</button>
             </div>
           </div>
         </header>
 
-        <!-- SOLO scrollea el main -->
-        <main class="flex-1 min-h-0 overflow-y-auto bg-slate-50 dark:bg-slate-950">
-          <div class="p-4 space-y-4">
-
-            {% if messages %}
-              <div class="space-y-2">
-                {% for message in messages %}
-                  <div class="ti-card p-3">
-                    <div class="flex items-start gap-2">
-                      <div class="shrink-0">
-                        {% if "success" in message.tags %}
-                          <span class="ti-badge-ok">OK</span>
-                        {% elif "error" in message.tags %}
-                          <span class="ti-badge-critical">Error</span>
-                        {% elif "warning" in message.tags %}
-                          <span class="ti-badge-high">Atención</span>
-                        {% else %}
-                          <span class="ti-badge-info">Info</span>
-                        {% endif %}
-                      </div>
-                      <div class="text-sm">{{ message }}</div>
-                    </div>
-                  </div>
-                {% endfor %}
-              </div>
-            {% endif %}
-
+        <main class="flex-1 min-h-0 {{ main_overflow_class|default:'overflow-y-auto' }} bg-slate-50 dark:bg-slate-950">
+          <div class="{{ main_container_class|default:'p-4 space-y-4' }}">
   {% else %}
-    
     <div class="h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       <header class="px-4 py-3 flex items-center justify-end gap-2">
         <span class="ti-badge-muted tabular-nums" data-clock>--:--:--</span>
@@ -102,9 +74,10 @@
 
       <main class="h-[calc(100%-52px)] overflow-y-auto">
         <div class="min-h-full p-4">
+  {% endif %}
 
           {% if messages %}
-            <div class="space-y-2 mb-4">
+            <div class="space-y-2">
               {% for message in messages %}
                 <div class="ti-card p-3">
                   <div class="flex items-start gap-2">
@@ -126,33 +99,20 @@
             </div>
           {% endif %}
 
-  {% endif %}
-
           {% block content %}{% endblock %}
 
   {% if user.is_authenticated and request.path != url_login %}
           </div>
         </main>
-      </div> 
-    </div>   
+      </div>
+    </div>
   {% else %}
         </div>
       </main>
-    </div>   
+    </div>
   {% endif %}
-  {% if messages %}
-  <div class="space-y-2 mb-4">
-    {% for message in messages %}
-      <div class="ti-card p-3">
-        <div class="text-sm">{{ message }}</div>
-      </div>
-    {% endfor %}
-  </div>
-{% endif %}
 
-  
   <script src="{% static 'js/app.js' %}" defer></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>
-

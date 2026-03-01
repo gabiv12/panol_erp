@@ -8,12 +8,13 @@
 
 <div class="ti-card p-4 space-y-4">
 
-  {% url 'flota:salida_add' as url_add %}
+  {# URLs (usar nombres reales del proyecto; evita links rotos) #}
+  {% url 'flota:salida_create' as url_add %}
   {% url 'flota:salida_diagrama_edit' as url_diagrama_edit %}
   {% url 'flota:salida_dual' as url_dual %}
   {% url 'flota:tv_horarios' as url_tv %}
   {% url 'flota:salida_copy_prev_day' as url_copy_prev %}
-  {% url 'flota:salida_print' as url_print %}
+  {% url 'flota:salida_diagrama_print' as url_print %}
 
   <!-- Filtros (GET) -->
   <form method="get" class="space-y-3" id="salidasFilterForm">
@@ -37,21 +38,32 @@
 
   <!-- Acciones -->
   <div class="flex flex-wrap gap-2 pt-2">
-    <a href="{{ url_add }}?fecha={{ fecha }}" class="ti-btn-primary">Nueva salida</a>
+    {# Acciones según permisos. Evita que CHOFERES vea botones que terminan en 403. #}
+
+    {% if perms.flota.add_salidaprogramada %}
+      <a href="{{ url_add }}?fecha={{ fecha }}" class="ti-btn-primary">Nueva salida</a>
+    {% endif %}
+
     <a href="{{ url_print }}?fecha={{ fecha }}" class="ti-btn">Imprimir</a>
-    <a href="{{ url_diagrama_edit }}?fecha={{ fecha }}" class="ti-btn">Editar diagrama</a>
+
+    {% if perms.flota.change_salidaprogramada %}
+      <a href="{{ url_diagrama_edit }}?fecha={{ fecha }}" class="ti-btn">Editar diagrama</a>
+    {% endif %}
+
     <a href="{{ url_tv }}?fecha={{ fecha }}" class="ti-btn">Pantalla TV</a>
     <a href="{{ url_dual }}?fecha={{ fecha }}" class="ti-btn">Hoy + mañana</a>
 
-    <form method="post" action="{{ url_copy_prev }}" class="inline" data-ti-confirm-form>
-      {% csrf_token %}
-      <input type="hidden" name="fecha" value="{{ fecha }}" />
-      <button type="button" class="ti-btn" data-ti-confirm-open
-              data-ti-title="Copiar día anterior"
-              data-ti-body="¿Copiar todas las salidas del día anterior a esta fecha? Si ya existen algunas, se omiten duplicados.">
-        Copiar día anterior
-      </button>
-    </form>
+    {% if perms.flota.change_salidaprogramada %}
+      <form method="post" action="{{ url_copy_prev }}" class="inline" data-ti-confirm-form>
+        {% csrf_token %}
+        <input type="hidden" name="fecha" value="{{ fecha }}" />
+        <button type="button" class="ti-btn" data-ti-confirm-open
+                data-ti-title="Copiar día anterior"
+                data-ti-body="¿Copiar todas las salidas del día anterior a esta fecha? Si ya existen algunas, se omiten duplicados.">
+          Copiar día anterior
+        </button>
+      </form>
+    {% endif %}
   </div>
 
 </div>
@@ -90,8 +102,12 @@
           <td class="ti-td">{{ s.chofer|default:"—" }}</td>
           <td class="ti-td">{{ s.recorrido|default:"—" }}</td>
           <td class="ti-td text-right">
-            <a href="{% url 'flota:salida_update' s.pk %}?fecha={{ fecha }}" class="ti-btn">Editar</a>
-            <a href="{% url 'flota:salida_delete' s.pk %}?fecha={{ fecha }}" class="ti-btn-danger">Eliminar</a>
+            {% if perms.flota.change_salidaprogramada %}
+              <a href="{% url 'flota:salida_update' s.pk %}?fecha={{ fecha }}" class="ti-btn">Editar</a>
+            {% endif %}
+            {% if perms.flota.delete_salidaprogramada %}
+              <a href="{% url 'flota:salida_delete' s.pk %}?fecha={{ fecha }}" class="ti-btn-danger">Eliminar</a>
+            {% endif %}
           </td>
         </tr>
       {% empty %}

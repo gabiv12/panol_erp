@@ -213,34 +213,50 @@
     });
   }
 
+  // ✅ Optimizado: precomputo normalizado + debounce + DocumentFragment
   function initProductSearch() {
     const search = $("producto_search");
     const sel = $("id_producto");
     if (!search || !sel) return;
 
-    const cache = Array.from(sel.options || []).map((o) => ({ value: o.value, text: o.textContent }));
+    const options = Array.from(sel.options || []);
+    if (!options.length) return;
+
+    const cache = options.map((o, idx) => ({
+      value: String(o.value),
+      text: String(o.textContent),
+      nValue: norm(o.value),
+      nText: norm(o.textContent),
+      isPlaceholder: idx === 0,
+    }));
+
+    let timer = null;
 
     function applyFilter() {
       const q = norm(search.value);
       const current = sel.value;
 
-      sel.innerHTML = "";
-      cache.forEach((it, idx) => {
-        if (idx === 0) {
+      const frag = document.createDocumentFragment();
+
+      cache.forEach((it) => {
+        if (it.isPlaceholder) {
           const o = document.createElement("option");
           o.value = it.value;
           o.textContent = it.text;
-          sel.appendChild(o);
+          frag.appendChild(o);
           return;
         }
 
-        if (!q || norm(it.text).includes(q) || norm(it.value).includes(q)) {
+        if (!q || it.nText.includes(q) || it.nValue.includes(q)) {
           const o = document.createElement("option");
           o.value = it.value;
           o.textContent = it.text;
-          sel.appendChild(o);
+          frag.appendChild(o);
         }
       });
+
+      sel.innerHTML = "";
+      sel.appendChild(frag);
 
       if (current) {
         const exists = Array.from(sel.options).some((o) => String(o.value) === String(current));
@@ -248,7 +264,11 @@
       }
     }
 
-    search.addEventListener("input", applyFilter);
+    search.addEventListener("input", function () {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(applyFilter, 120);
+    });
+
     applyFilter();
   }
 
@@ -264,7 +284,11 @@
 
   const STOCK_CACHE = new Map();
 
-  function fetchStock(productoId) {
+  // ✅ Para evitar UI “pisada” por respuestas viejas
+  let refreshSeq = 0;
+  let stockAbort = null;
+
+  function fetchStock(productoId, signal) {
     const url = getStockUrl();
     if (!url || !productoId) return Promise.resolve({ map: new Map(), list: [] });
 
@@ -275,8 +299,12 @@
       method: "GET",
       headers: { "X-Requested-With": "XMLHttpRequest" },
       credentials: "same-origin",
+      signal,
     })
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
       .then((data) => {
         const list = data && data.ok && Array.isArray(data.stocks) ? data.stocks : [];
         const m = new Map();
@@ -295,20 +323,23 @@
   }
 
   function rebuildSelectFromCache(sel, cache, selectedValue) {
-    sel.innerHTML = "";
+    const frag = document.createDocumentFragment();
     cache.forEach((it) => {
       const opt = document.createElement("option");
       opt.value = it.value;
       opt.textContent = it.text;
-      sel.appendChild(opt);
+      frag.appendChild(opt);
     });
+    sel.innerHTML = "";
+    sel.appendChild(frag);
+
     if (selectedValue) {
       const exists = Array.from(sel.options).some((o) => String(o.value) === String(selectedValue));
       if (exists) sel.value = selectedValue;
     }
   }
 
-  function applyOrigenFilter(tipoKey, productoId, stockPack, ubicAllCache) {
+  function applyOrigenFilter(tipoKey, productoId, stockPack, ubicAllCache, ubicLabelMap) {
     const selUbic = $("id_ubicacion");
     if (!selUbic) return;
 
@@ -321,31 +352,29 @@
       return;
     }
 
-    const labelMap = new Map();
-    ubicAllCache.forEach((it) => {
-      if (it.value) labelMap.set(String(it.value), it.text);
-    });
-
     const list = stockPack && Array.isArray(stockPack.list) ? stockPack.list : [];
     const withStock = list.filter((it) => Number(it.cantidad || 0) > 0);
 
-    selUbic.innerHTML = "";
+    const frag = document.createDocumentFragment();
 
     const ph = ubicAllCache && ubicAllCache.length ? ubicAllCache[0] : { value: "", text: "—" };
     const o0 = document.createElement("option");
     o0.value = ph.value;
     o0.textContent = ph.text;
-    selUbic.appendChild(o0);
+    frag.appendChild(o0);
 
     withStock.forEach((it) => {
       const id = String(it.ubicacion_id);
       const qty = Number(it.cantidad || 0);
-      const baseLabel = labelMap.get(id) || String(it.ubicacion || id);
+      const baseLabel = (ubicLabelMap && ubicLabelMap.get(id)) || String(it.ubicacion || id);
       const opt = document.createElement("option");
       opt.value = id;
       opt.textContent = baseLabel + " · Stock: " + fmtQty(qty);
-      selUbic.appendChild(opt);
+      frag.appendChild(opt);
     });
+
+    selUbic.innerHTML = "";
+    selUbic.appendChild(frag);
 
     if (prev) {
       const exists = Array.from(selUbic.options).some((o) => String(o.value) === String(prev));
@@ -465,7 +494,14 @@
     const form = document.querySelector("form");
 
     const map = buildTipoMap();
+
     const ubicAllCache = selUbic ? buildSelectCache(selUbic) : [];
+
+    // ✅ Se arma una sola vez (antes se reconstruía cada refresh)
+    const ubicLabelMap = new Map();
+    ubicAllCache.forEach((it) => {
+      if (it.value) ubicLabelMap.set(String(it.value), it.text);
+    });
 
     let tipoKey = "";
     let productoId = selProd ? safeStr(selProd.value) : "";
@@ -473,9 +509,25 @@
 
     function refreshStockAndOrigen() {
       productoId = selProd ? safeStr(selProd.value) : "";
-      return fetchStock(productoId).then((pack) => {
+
+      // Cancelar request anterior (si el browser soporta AbortController)
+      if (typeof AbortController !== "undefined") {
+        if (stockAbort) stockAbort.abort();
+        stockAbort = new AbortController();
+      } else {
+        stockAbort = null;
+      }
+
+      const mySeq = ++refreshSeq;
+
+      const signal = stockAbort ? stockAbort.signal : undefined;
+
+      return fetchStock(productoId, signal).then((pack) => {
+        // Evita que una respuesta vieja pise el estado actual
+        if (mySeq !== refreshSeq) return pack;
+
         stockPack = pack;
-        applyOrigenFilter(tipoKey, productoId, stockPack, ubicAllCache);
+        applyOrigenFilter(tipoKey, productoId, stockPack, ubicAllCache, ubicLabelMap);
         updateStockPanel(tipoKey, productoId, stockPack);
         return pack;
       });

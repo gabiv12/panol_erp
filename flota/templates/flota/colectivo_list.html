@@ -22,9 +22,18 @@
     </div>
 
     <div class="flex flex-wrap gap-2">
-      <a class="ti-btn" href="{% url 'flota:colectivo_import' %}">Importar</a>
-      <a class="ti-btn" href="{% url 'flota:colectivo_export' %}">Exportar</a>
-      <a class="ti-btn-primary" href="{% url 'flota:colectivo_create' %}">Nuevo</a>
+      
+      {% if perms.flota.add_colectivo %}
+        <a class="ti-btn" href="{% url 'flota:colectivo_import' %}">Importar</a>
+      {% endif %}
+
+      {% if perms.flota.change_colectivo %}
+        <a class="ti-btn" href="{% url 'flota:colectivo_export' %}">Exportar</a>
+      {% endif %}
+
+      {% if perms.flota.add_colectivo %}
+        <a class="ti-btn-primary" href="{% url 'flota:colectivo_create' %}">Nuevo</a>
+      {% endif %}
     </div>
   </div>
 
@@ -103,8 +112,12 @@
             <td class="ti-td text-right">
               <div class="flex justify-end gap-2">
                 <a class="ti-btn" href="{% url 'flota:colectivo_report' c.pk %}?days=30">Informe 30 días</a>
-                <a class="ti-btn" href="{% url 'flota:colectivo_update' c.pk %}">Editar</a>
-                <a class="ti-btn" href="{% url 'flota:colectivo_delete' c.pk %}">Eliminar</a>
+                {% if perms.flota.change_colectivo %}
+                  <a class="ti-btn" href="{% url 'flota:colectivo_update' c.pk %}">Editar</a>
+                {% endif %}
+                {% if perms.flota.delete_colectivo %}
+                  <a class="ti-btn" href="{% url 'flota:colectivo_delete' c.pk %}">Eliminar</a>
+                {% endif %}
               </div>
             </td>
           </tr>

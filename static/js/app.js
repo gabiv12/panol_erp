@@ -1,121 +1,11 @@
-
-  // ---------------------------
-  // Internal modal (no browser alert/confirm)
-  // ---------------------------
-  function ensureModal() {
-    var existing = qs("#tiModalOverlay");
-    if (existing) return existing;
-
-    var overlay = document.createElement("div");
-    overlay.id = "tiModalOverlay";
-    overlay.className = "fixed inset-0 z-[9999] hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4";
-
-    var panel = document.createElement("div");
-    panel.id = "tiModalPanel";
-    panel.className = "w-full max-w-lg ti-card p-4";
-
-    var title = document.createElement("div");
-    title.id = "tiModalTitle";
-    title.className = "text-base font-semibold mb-2";
-    title.textContent = "Confirmar";
-
-    var msg = document.createElement("div");
-    msg.id = "tiModalMsg";
-    msg.className = "text-sm ti-muted whitespace-pre-wrap";
-
-    var actions = document.createElement("div");
-    actions.className = "mt-4 flex items-center justify-end gap-2";
-
-    var cancel = document.createElement("button");
-    cancel.type = "button";
-    cancel.id = "tiModalCancel";
-    cancel.className = "ti-btn";
-    cancel.textContent = "Cancelar";
-
-    var ok = document.createElement("button");
-    ok.type = "button";
-    ok.id = "tiModalOk";
-    ok.className = "ti-btn-primary";
-    ok.textContent = "Aceptar";
-
-    actions.appendChild(cancel);
-    actions.appendChild(ok);
-
-    panel.appendChild(title);
-    panel.appendChild(msg);
-    panel.appendChild(actions);
-
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-
-    return overlay;
-  }
-
-  function showModal(opts) {
-    var overlay = ensureModal();
-    var titleEl = qs("#tiModalTitle", overlay);
-    var msgEl = qs("#tiModalMsg", overlay);
-    var btnOk = qs("#tiModalOk", overlay);
-    var btnCancel = qs("#tiModalCancel", overlay);
-
-    titleEl.textContent = (opts && opts.title) ? opts.title : "Confirmar";
-    msgEl.textContent = (opts && opts.message) ? opts.message : "";
-
-    btnOk.textContent = (opts && opts.okText) ? opts.okText : "Aceptar";
-    btnCancel.textContent = (opts && opts.cancelText) ? opts.cancelText : "Cancelar";
-
-    var mode = (opts && opts.mode) ? opts.mode : "confirm"; // confirm|alert
-    btnCancel.classList.toggle("hidden", mode === "alert");
-
-    overlay.classList.remove("hidden");
-
-    function close() { overlay.classList.add("hidden"); cleanup(); }
-    function cleanup() {
-      overlay.removeEventListener("click", onOverlayClick, true);
-      document.removeEventListener("keydown", onKey, true);
-      btnOk.removeEventListener("click", onOk, true);
-      btnCancel.removeEventListener("click", onCancel, true);
-    }
-    function onOverlayClick(e) {
-      if (e.target === overlay) {
-        if (mode === "alert") { onOk(e); }
-        else { onCancel(e); }
-      }
-    }
-    function onKey(e) {
-      if (e.key === "Escape") {
-        if (mode === "alert") { onOk(e); }
-        else { onCancel(e); }
-      }
-    }
-
-    var resolver = (opts && opts.resolve) ? opts.resolve : function(){};
-    function onOk(e) { e && e.preventDefault(); close(); resolver(true); }
-    function onCancel(e) { e && e.preventDefault(); close(); resolver(false); }
-
-    overlay.addEventListener("click", onOverlayClick, true);
-    document.addEventListener("keydown", onKey, true);
-    btnOk.addEventListener("click", onOk, true);
-    btnCancel.addEventListener("click", onCancel, true);
-
-    setTimeout(function(){ btnOk.focus(); }, 0);
-  }
-
-  window.tiAlert = function(message, title) {
-    return new Promise(function(resolve){
-      showModal({mode:"alert", title: title || "Aviso", message: String(message || ""), okText:"Aceptar", resolve: function(){ resolve(true); }});
-    });
-  };
-
-  window.tiConfirm = function(message, title) {
-    return new Promise(function(resolve){
-      showModal({mode:"confirm", title: title || "Confirmar", message: String(message || ""), okText:"Aceptar", cancelText:"Cancelar", resolve: resolve});
-    });
-  };
-﻿/* static/js/app.js
-   UI base: drawer mobile + theme toggle + clock + progress bars
-   - Robusto: soporta IDs (#drawer/#drawerOverlay) y data-attrs ([data-drawer], [data-drawer-overlay])
-   - Robusto: listeners en capture + touchend (no lo rompe stopPropagation)
+/* static/js/app.js
+   UI base (offline-first):
+   - Theme toggle (claro/oscuro) con persistencia localStorage
+   - Drawer sidebar mobile
+   - Clock (data-clock)
+   - Progress bars (data-progress + data-value)
+   - Modales (dashboard)
+   - Donuts (tortas) semáforo por módulo
 */
 
 (function () {
@@ -129,6 +19,17 @@
   }
   function qsa(sel, root) {
     return Array.prototype.slice.call((root || document).querySelectorAll(sel));
+  }
+
+  function toInt(v) {
+    var n = parseInt(String(v || "0"), 10);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function clamp(n, a, b) {
+    if (n < a) return a;
+    if (n > b) return b;
+    return n;
   }
 
   // ---------------------------
@@ -184,19 +85,11 @@
   // Drawer (mobile sidebar)
   // ---------------------------
   function getDrawerEl() {
-    return (
-      qs("[data-drawer]") ||
-      qs("#drawer") ||
-      qs("#tiDrawer")
-    );
+    return qs("[data-drawer]") || qs("#drawer");
   }
 
   function getOverlayEl() {
-    return (
-      qs("[data-drawer-overlay]") ||
-      qs("#drawerOverlay") ||
-      qs("#tiOverlay")
-    );
+    return qs("[data-drawer-overlay]") || qs("#drawerOverlay");
   }
 
   function openDrawer() {
@@ -219,43 +112,31 @@
     document.body.classList.remove("overflow-hidden");
   }
 
-  function isOpenBtn(target) {
-    return !!(target && target.closest && target.closest("[data-drawer-open]"));
-  }
-
-  function isCloseBtn(target) {
-    return !!(target && target.closest && target.closest("[data-drawer-close]"));
-  }
-
-  function isOverlay(target) {
-    if (!target) return false;
-    if (target.hasAttribute && target.hasAttribute("data-drawer-overlay")) return true;
-    if (target.id === "drawerOverlay" || target.id === "tiOverlay") return true;
-    return false;
-  }
-
   function initDrawer() {
-    // Capture: no lo rompe stopPropagation de otros scripts
-    function handler(e) {
+    document.addEventListener("click", function (e) {
       var t = e.target;
-      if (isOpenBtn(t)) {
+      if (t && t.closest && t.closest("[data-drawer-open]")) {
         e.preventDefault();
         openDrawer();
         return;
       }
-      if (isCloseBtn(t) || isOverlay(t)) {
+      if (t && t.closest && t.closest("[data-drawer-close]")) {
         e.preventDefault();
         closeDrawer();
         return;
       }
-    }
+      if (t && (t.hasAttribute("data-drawer-overlay") || t.id === "drawerOverlay")) {
+        e.preventDefault();
+        closeDrawer();
+        return;
+      }
+    }, true);
 
-    document.addEventListener("click", handler, true);
-    document.addEventListener("touchend", handler, true);
-
-    // Escape cierra
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") closeDrawer();
+      if (e.key === "Escape") {
+        closeDrawer();
+        closeAnyModal();
+      }
     });
   }
 
@@ -263,8 +144,8 @@
   // Clock (topbar)
   // ---------------------------
   function initClock() {
-    var el = qs("[data-clock]");
-    if (!el) return;
+    var els = qsa("[data-clock]");
+    if (!els.length) return;
 
     function pad(n) {
       return String(n).padStart(2, "0");
@@ -272,7 +153,10 @@
 
     function tick() {
       var d = new Date();
-      el.textContent = pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+      var s = pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+      els.forEach(function (el) {
+        el.textContent = s;
+      });
     }
 
     tick();
@@ -296,6 +180,157 @@
   }
 
   // ---------------------------
+  // Modales
+  // ---------------------------
+  function openModalById(id) {
+    var el = qs("#" + id);
+    if (!el) return;
+    el.classList.remove("hidden");
+    document.body.classList.add("overflow-hidden");
+    el.setAttribute("aria-hidden", "false");
+  }
+
+  function closeModal(el) {
+    if (!el) return;
+    el.classList.add("hidden");
+    el.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("overflow-hidden");
+  }
+
+  function closeAnyModal() {
+    var open = qsa("[data-modal]").filter(function (m) {
+      return !m.classList.contains("hidden");
+    });
+    if (!open.length) return;
+    open.forEach(function (m) {
+      closeModal(m);
+    });
+  }
+
+  function initModals() {
+    document.addEventListener("click", function (e) {
+      var t = e.target;
+
+      var openBtn = t && t.closest ? t.closest("[data-modal-open]") : null;
+      if (openBtn) {
+        e.preventDefault();
+        var id = openBtn.getAttribute("data-modal-open");
+        if (id) openModalById(id);
+        return;
+      }
+
+      var closeBtn = t && t.closest ? t.closest("[data-modal-close]") : null;
+      if (closeBtn) {
+        e.preventDefault();
+        var modal = closeBtn.closest("[data-modal]");
+        closeModal(modal);
+        return;
+      }
+
+      var overlay = t && t.closest ? t.closest("[data-modal-overlay]") : null;
+      if (overlay) {
+        e.preventDefault();
+        var m2 = overlay.closest("[data-modal]");
+        closeModal(m2);
+        return;
+      }
+    }, true);
+  }
+
+  // ---------------------------
+  // Donuts (tortas) semáforo
+  // ---------------------------
+  function donutStyle(ok, warn, bad, total) {
+    ok = toInt(ok);
+    warn = toInt(warn);
+    bad = toInt(bad);
+    total = toInt(total);
+
+    if (total <= 0) {
+      return { label: "--", bg: "conic-gradient(#94a3b8 0 100%)" };
+    }
+
+    // Ajustes para evitar desbordes (inventario puede traer bajo_min incluyendo sin_stock)
+    if (ok + warn + bad > total) {
+      // Regla: bad manda, warn se ajusta, ok es el resto
+      var bad2 = clamp(bad, 0, total);
+      var warn2 = clamp(warn - bad2, 0, total - bad2);
+      var ok2 = clamp(total - bad2 - warn2, 0, total);
+      ok = ok2;
+      warn = warn2;
+      bad = bad2;
+    } else {
+      // Si falta resto, va a "pendiente"
+      // (no lo dibujamos como color aparte; se suma a warn para que no quede hueco)
+      var rest = total - (ok + warn + bad);
+      if (rest > 0) warn += rest;
+    }
+
+    var pOk = (ok / total) * 100;
+    var pWarn = (warn / total) * 100;
+    var pBad = (bad / total) * 100;
+
+    var a = clamp(pOk, 0, 100);
+    var b = clamp(a + pWarn, 0, 100);
+
+    // Semáforo: verde / amarillo / rojo
+    var bg = "conic-gradient(" +
+      "#10b981 0% " + a.toFixed(2) + "%, " +
+      "#f59e0b " + a.toFixed(2) + "% " + b.toFixed(2) + "%, " +
+      "#ef4444 " + b.toFixed(2) + "% 100%)";
+
+    var label = String(Math.round((ok / total) * 100)) + "%";
+    return { label: label, bg: bg };
+  }
+
+  function renderDonuts() {
+    var nodes = qsa("[data-donut]");
+    if (!nodes.length) return;
+
+    nodes.forEach(function (wrap) {
+      var type = wrap.getAttribute("data-donut");
+      var ring = qs("[data-donut-ring]", wrap);
+      var label = qs("[data-donut-label]", wrap);
+      if (!ring || !label) return;
+
+      // Tipos especiales: VTV (se calcula con vencidos/hoy/porvencer/sinfecha)
+      if (type === "vtv") {
+        var total = toInt(wrap.getAttribute("data-total"));
+        var vencidos = toInt(wrap.getAttribute("data-vencidos"));
+        var hoy = toInt(wrap.getAttribute("data-hoy"));
+        var por7 = toInt(wrap.getAttribute("data-porvencer7"));
+        var sinfecha = toInt(wrap.getAttribute("data-sinfecha"));
+
+        var bad = vencidos + hoy;
+        var warn = por7 + sinfecha;
+        var ok = total - bad - warn;
+        if (ok < 0) ok = 0;
+
+        var r1 = donutStyle(ok, warn, bad, total);
+        ring.style.background = r1.bg;
+        label.textContent = r1.label;
+        return;
+      }
+
+      // Genérico: total/ok/warn/bad
+      var total2 = toInt(wrap.getAttribute("data-total"));
+      var ok2 = toInt(wrap.getAttribute("data-ok"));
+      var warn2 = toInt(wrap.getAttribute("data-warn"));
+      var bad2 = toInt(wrap.getAttribute("data-bad"));
+
+      // Si ok no viene, lo infiere
+      if (!wrap.hasAttribute("data-ok") && total2 > 0) {
+        ok2 = total2 - warn2 - bad2;
+        if (ok2 < 0) ok2 = 0;
+      }
+
+      var r2 = donutStyle(ok2, warn2, bad2, total2);
+      ring.style.background = r2.bg;
+      label.textContent = r2.label;
+    });
+  }
+
+  // ---------------------------
   // Boot
   // ---------------------------
   document.addEventListener("DOMContentLoaded", function () {
@@ -303,5 +338,7 @@
     initDrawer();
     initClock();
     initProgress();
+    initModals();
+    renderDonuts();
   });
 })();

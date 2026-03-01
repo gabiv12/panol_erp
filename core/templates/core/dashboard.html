@@ -1,400 +1,434 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}Inicio | La Termal ERP{% endblock %}
 {% block page_title %}Inicio{% endblock %}
-{% block page_subtitle %}Pantalla operativa: qué está crítico hoy y qué acciones seguir.{% endblock %}
+{% block page_subtitle %}Panorama general{% endblock %}
 
 {% block content %}
-<div class="space-y-4">
 
-  <!-- Header operativo + accesos rápidos -->
-  <section class="ti-card p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+{% if request.user.is_superuser or perms.auditoria.view_auditevent %}
+
+<section class="ti-card p-4">
+  <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
     <div class="min-w-0">
-      <div class="text-sm font-semibold">Inicio de turno</div>
-      <div class="text-xs ti-subtitle truncate">
-        Fecha: {{ today|date:"d/m/Y" }} · Ventana crítica: hoy y próximos 7 días · {{ header_status_text }}
-      </div>
+      <div class="text-xl font-semibold">Panorama de la empresa</div>
+      <div class="text-sm ti-subtitle mt-1">Resumen del día para gerencia. Entrá a cada módulo para ver detalle.</div>
+    </div>
+
+    <div class="flex flex-wrap gap-2 items-center">
+      {% if alert_crit_vtv or alert_crit_unidad or alert_crit_inv_sin_stock %}
+        <span class="ti-badge-critical">Crítico</span>
+      {% else %}
+        <span class="ti-badge-ok">OK</span>
+      {% endif %}
+
+      {% if inv_productos_bajo_min %}
+        <span class="ti-badge-high">Atención: {{ inv_productos_bajo_min }}</span>
+      {% else %}
+        <span class="ti-badge-ok">Atención: 0</span>
+      {% endif %}
+
+      <span class="ti-badge-muted">Hoy: {{ today|date:"d/m/Y" }}</span>
+    </div>
+  </div>
+</section>
+
+<section class="ti-card p-4">
+  <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div class="min-w-0">
+      <div class="text-lg font-semibold">Accesos directos</div>
+      <div class="text-sm ti-subtitle mt-1">Entrar rápido a lo importante.</div>
     </div>
 
     <div class="flex flex-wrap gap-2">
-      {% url 'flota:salida_list' as url_horarios %}
-      {% url 'flota:parte_list' as url_partes %}
-      {% url 'inventario:movimiento_list' as url_movs %}
-      {% url 'flota:colectivo_list' as url_unidades %}
-      {% url 'flota:chofer_list' as url_choferes %}
-
-      {% if url_horarios %}<a href="{{ url_horarios }}" class="ti-btn">Horarios</a>{% endif %}
-      {% if url_partes %}<a href="{{ url_partes }}" class="ti-btn">Partes</a>{% endif %}
-      {% if url_movs %}<a href="{{ url_movs }}" class="ti-btn">Inventario</a>{% endif %}
-      {% if url_unidades %}<a href="{{ url_unidades }}" class="ti-btn">Unidades</a>{% endif %}
-      {% if url_choferes %}<a href="{{ url_choferes }}" class="ti-btn">Choferes</a>{% endif %}
+      {% if perms.flota.view_colectivo %}
+        <a class="ti-btn" href="{% url 'flota:colectivo_list' %}">Unidades</a>
+      {% endif %}
+      {% if perms.flota.view_salidaprogramada %}
+        <a class="ti-btn" href="{% url 'flota:salida_list' %}">Horarios</a>
+      {% endif %}
+      {% if perms.flota.view_partediario %}
+        <a class="ti-btn" href="{% url 'flota:parte_list' %}">Partes</a>
+      {% endif %}
+      {% if perms.inventario.view_producto %}
+        <a class="ti-btn" href="{% url 'inventario:producto_list' %}">Inventario</a>
+      {% endif %}
+      {% if perms.inventario.view_movimientostock %}
+        <a class="ti-btn" href="{% url 'inventario:movimiento_list' %}">Movimientos</a>
+      {% endif %}
+      <a class="ti-btn" href="{% url 'auditoria:audit_list' %}">Auditoría</a>
+      {% if perms.flota.view_salidaprogramada %}
+        <a class="ti-btn" href="{% url 'flota:tv_horarios' %}">TV Horarios</a>
+      {% endif %}
+      {% if perms.flota.view_partediario %}
+        <a class="ti-btn" href="{% url 'flota:tv_taller' %}">TV Taller</a>
+      {% endif %}
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- KPIs (Inventario + Flota) -->
-  <section class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+<section class="ti-card p-4">
+  <div class="flex items-start justify-between gap-3">
+    <div class="min-w-0">
+      <div class="text-lg font-semibold">Notificaciones</div>
+      <div class="text-sm ti-subtitle mt-1">Acá van a llegar avisos e informes (diario / semanal / mensual).</div>
+    </div>
+    <span class="ti-badge-muted">0 nuevas</span>
+  </div>
 
-    <!-- INVENTARIO -->
-    <div class="ti-card p-4">
-      <div class="flex items-start justify-between">
-        <div>
-          <div class="text-sm font-semibold">Inventario</div>
-          <div class="text-xs ti-subtitle">Disponibilidad real (productos con stock &gt; 0)</div>
-        </div>
-        <span class="ti-badge-ok">Operativo</span>
+  <div class="ti-card p-3 mt-3">
+    <div class="font-semibold">Sin notificaciones por ahora</div>
+    <div class="text-sm ti-subtitle mt-1">Cuando implementemos reportes y avisos, se van a mostrar acá.</div>
+  </div>
+</section>
+
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+  {% if perms.flota.view_colectivo %}
+  <div class="ti-card p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-lg font-semibold">Flota</div>
+        <div class="text-sm ti-subtitle mt-1">Activas / Taller / Baja</div>
       </div>
-
-      <div class="mt-4">
-        <div class="flex items-center justify-between text-sm">
-          <span>Disponibilidad</span>
-          <span class="font-semibold tabular-nums">{{ inv_disponibilidad_pct }}%</span>
-        </div>
-        <div class="mt-2 h-2 rounded-full bg-slate-100 dark:bg-slate-900 overflow-hidden">
-          <div class="h-2 bg-emerald-500" data-progress data-value="{{ inv_disponibilidad_pct }}"></div>
-        </div>
-      </div>
-
-      <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Productos</div>
-          <div class="font-semibold tabular-nums">{{ inv_total_productos }}</div>
-        </div>
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Ubicaciones</div>
-          <div class="font-semibold tabular-nums">{{ inv_total_ubicaciones }}</div>
-        </div>
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Sin stock</div>
-          <div class="font-semibold tabular-nums">{{ inv_productos_sin_stock }}</div>
-        </div>
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Bajo mínimo</div>
-          <div class="font-semibold tabular-nums">{{ inv_productos_bajo_min }}</div>
-        </div>
-      </div>
-
-      <div class="mt-3 flex flex-wrap gap-2">
-        <a class="ti-btn" href="{% url 'inventario:stock_list' %}?low=1">Ver low stock</a>
-        <a class="ti-btn" href="{% url 'inventario:movimiento_create' %}">Nuevo movimiento</a>
-      </div>
+      {% if kpi_baja %}
+        <span class="ti-badge-critical">Alerta</span>
+      {% elif kpi_taller %}
+        <span class="ti-badge-high">Atención</span>
+      {% else %}
+        <span class="ti-badge-ok">OK</span>
+      {% endif %}
     </div>
 
-    <!-- MOVIMIENTOS -->
-    <div class="ti-card p-4">
-      <div class="flex items-start justify-between">
-        <div>
-          <div class="text-sm font-semibold">Pañol hoy</div>
-          <div class="text-xs ti-subtitle">Movimientos reales (hoy y últimos 7 días)</div>
-        </div>
-        <span class="ti-badge-info">Hoy</span>
+    <div class="grid grid-cols-3 gap-2 mt-3">
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Activas</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_activos|default:0 }}</div>
       </div>
-
-      <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Mov. hoy</div>
-          <div class="font-semibold tabular-nums">{{ inv_mov_hoy }}</div>
-        </div>
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Mov. 7 días</div>
-          <div class="font-semibold tabular-nums">{{ inv_mov_7 }}</div>
-        </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Taller</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_taller|default:0 }}</div>
       </div>
-
-      <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Ingresos</div>
-          <div class="font-semibold tabular-nums">{{ inv_mov_hoy_ing }}</div>
-        </div>
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Egresos</div>
-          <div class="font-semibold tabular-nums">{{ inv_mov_hoy_egr }}</div>
-        </div>
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Ajustes</div>
-          <div class="font-semibold tabular-nums">{{ inv_mov_hoy_ajs }}</div>
-        </div>
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Transfer.</div>
-          <div class="font-semibold tabular-nums">{{ inv_mov_hoy_trf }}</div>
-        </div>
-      </div>
-
-      <div class="mt-3">
-        <a class="ti-btn" href="{% url 'inventario:movimiento_list' %}">Ver movimientos</a>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Baja</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_baja|default:0 }}</div>
       </div>
     </div>
 
-    <!-- FLOTA / VTV -->
-    <div class="ti-card p-4">
-      <div class="flex items-start justify-between">
-        <div>
-          <div class="text-sm font-semibold">Flota</div>
-          <div class="text-xs ti-subtitle">Operativo + VTV (real)</div>
-        </div>
-        <span class="ti-badge-ok">Operativa</span>
-      </div>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <a class="ti-btn" href="{% url 'flota:colectivo_list' %}">Abrir flota</a>
+      <a class="ti-btn" href="{% url 'flota:informe_flota' %}">Informe 30 días</a>
+    </div>
+  </div>
+  {% endif %}
 
-      <div class="mt-4">
-        <div class="flex items-center justify-between text-sm">
-          <span>Operativo</span>
-          <span class="font-semibold tabular-nums">{{ kpi_flota_operativo_pct }}%</span>
-        </div>
-        <div class="mt-2 h-2 rounded-full bg-slate-100 dark:bg-slate-900 overflow-hidden">
-          <div class="h-2 bg-emerald-500" data-progress data-value="{{ kpi_flota_operativo_pct }}"></div>
-        </div>
+  {% if perms.flota.view_colectivo %}
+  <div class="ti-card p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-lg font-semibold">Vencimientos (VTV)</div>
+        <div class="text-sm ti-subtitle mt-1">Vencido / hoy / 7 días / pendiente</div>
       </div>
+      {% if alert_crit_vtv %}
+        <span class="ti-badge-critical">Crítico</span>
+      {% elif kpi_vtv_por_vencer_7 or kpi_vtv_sin_fecha %}
+        <span class="ti-badge-high">Atención</span>
+      {% else %}
+        <span class="ti-badge-ok">OK</span>
+      {% endif %}
+    </div>
 
-      <div class="mt-4 grid grid-cols-3 gap-2 text-sm">
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Activos</div>
-          <div class="font-semibold tabular-nums">{{ kpi_activos }}</div>
-        </div>
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Taller</div>
-          <div class="font-semibold tabular-nums">{{ kpi_taller }}</div>
-        </div>
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Baja</div>
-          <div class="font-semibold tabular-nums">{{ kpi_baja }}</div>
-        </div>
+    <div class="grid grid-cols-2 gap-2 mt-3">
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Vencido</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_vtv_vencidos|default:0 }}</div>
       </div>
-
-      <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">VTV venc./hoy</div>
-          <div class="font-semibold tabular-nums">{{ kpi_vtv_vencidos|add:kpi_vtv_hoy }}</div>
-        </div>
-        <div class="ti-card p-3">
-          <div class="text-xs ti-subtitle">Por vencer (7d)</div>
-          <div class="font-semibold tabular-nums">{{ kpi_vtv_por_vencer_7 }}</div>
-        </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Hoy</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_vtv_hoy|default:0 }}</div>
       </div>
-
-      <div class="mt-3">
-        <a class="ti-btn" href="{% url 'flota:colectivo_list' %}">Ver flota</a>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">7 días</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_vtv_por_vencer_7|default:0 }}</div>
+      </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Pendiente</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_vtv_sin_fecha|default:0 }}</div>
       </div>
     </div>
 
-  </section>
-    <!-- Unidades (acceso rápido a informe 30 días) -->
-  <section class="ti-card p-4">
-    <div class="flex items-center justify-between gap-3">
-      <div>
-        <div class="text-sm font-semibold">Unidades</div>
-        <div class="text-xs ti-subtitle">Acceso rápido al informe por unidad (últimos 30 días)</div>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <a class="ti-btn" href="{% url 'flota:colectivo_list' %}">Ver unidades</a>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if perms.flota.view_salidaprogramada %}
+  <div class="ti-card p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-lg font-semibold">Horarios (diagrama)</div>
+        <div class="text-sm ti-subtitle mt-1">Total / especiales / sin chofer</div>
       </div>
-      <a class="ti-btn" href="{% url 'flota:colectivo_list' %}">Ver flota</a>
+      {% if kpi_salidas_hoy_sin_asignar %}
+        <span class="ti-badge-high">Atención</span>
+      {% else %}
+        <span class="ti-badge-ok">OK</span>
+      {% endif %}
     </div>
 
-    <div class="mt-3 overflow-x-auto">
-      <table class="ti-table">
-        <thead class="ti-thead">
-          <tr>
-            <th class="ti-th">Interno</th>
-            <th class="ti-th">Dominio</th>
-            <th class="ti-th">Estado</th>
-            <th class="ti-th">VTV</th>
-            <th class="ti-th text-right">Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for u in colectivos_quick %}
-            <tr class="ti-tr">
-              <td class="ti-td font-semibold tabular-nums">{{ u.interno }}</td>
-              <td class="ti-td">{{ u.dominio|default:"—" }}</td>
-              <td class="ti-td">
-                {% if u.estado == "ACTIVO" %}
-                  <span class="ti-badge-ok">Activa</span>
-                {% elif u.estado == "TALLER" %}
-                  <span class="ti-badge-high">Taller</span>
-                {% elif u.estado == "BAJA" %}
-                  <span class="ti-badge-critical">Baja</span>
-                {% else %}
-                  <span class="ti-badge-muted">{{ u.estado }}</span>
-                {% endif %}
-              </td>
-              <td class="ti-td">
-                {% if u.revision_tecnica_vto %}
-                  {{ u.revision_tecnica_vto|date:"d/m/Y" }}
-                {% else %}
-                  <span class="ti-badge-info">Sin fecha</span>
-                {% endif %}
-              </td>
-              <td class="ti-td text-right">
-                <a class="ti-btn" href="{% url 'flota:colectivo_report' u.pk %}">Informe 30 días</a>
-              </td>
-            </tr>
-          {% empty %}
-            <tr class="ti-tr"><td class="ti-td" colspan="5"><div class="text-xs ti-subtitle">No hay unidades.</div></td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- Operación: críticos inventario + movimientos recientes -->
-  <section class="grid grid-cols-1 2xl:grid-cols-2 gap-3">
-
-    <!-- Críticos inventario -->
-    <div class="ti-card p-4">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <div class="text-sm font-semibold">Críticos de inventario</div>
-          <div class="text-xs ti-subtitle">Sin stock o por debajo del mínimo (real)</div>
-        </div>
-        <a class="ti-btn" href="{% url 'inventario:stock_list' %}?low=1">Low stock</a>
+    <div class="grid grid-cols-3 gap-2 mt-3">
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Total</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_salidas_hoy_total|default:0 }}</div>
       </div>
-
-      <div class="mt-3 overflow-x-auto">
-        <table class="ti-table">
-          <thead class="ti-thead">
-            <tr>
-              <th class="ti-th">Producto</th>
-              <th class="ti-th">Ubicaciones</th>
-              <th class="ti-th text-right">Stock</th>
-              <th class="ti-th text-right">Mín.</th>
-              <th class="ti-th">Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for it in criticos_inventario %}
-              <tr class="ti-tr">
-                <td class="ti-td">
-                  <div class="font-semibold">{{ it.codigo }}</div>
-                  <div class="text-xs ti-subtitle truncate">{{ it.nombre }}</div>
-                </td>
-                <td class="ti-td text-slate-600 dark:text-slate-300">{{ it.ubicaciones }}</td>
-                <td class="ti-td text-right tabular-nums">{{ it.stock_total }}</td>
-                <td class="ti-td text-right tabular-nums">{{ it.stock_minimo }}</td>
-                <td class="ti-td">
-                  {% if it.badge == "critical" %}
-                    <span class="ti-badge-critical">{{ it.estado }}</span>
-                  {% else %}
-                    <span class="ti-badge-high">{{ it.estado }}</span>
-                  {% endif %}
-                </td>
-              </tr>
-            {% empty %}
-              <tr class="ti-tr">
-                <td class="ti-td" colspan="5"><div class="text-xs ti-subtitle">No hay críticos (bien).</div></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Especial</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_salidas_hoy_especial|default:0 }}</div>
+      </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Sin chofer</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_salidas_hoy_sin_asignar|default:0 }}</div>
       </div>
     </div>
 
-    <!-- Movimientos recientes -->
-    <div class="ti-card p-4">
-      <div class="flex items-center justify-between gap-3">
-        <div>
-          <div class="text-sm font-semibold">Movimientos recientes</div>
-          <div class="text-xs ti-subtitle">Últimos registros (real)</div>
-        </div>
-        <a class="ti-btn" href="{% url 'inventario:movimiento_list' %}">Ver todos</a>
-      </div>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <a class="ti-btn" href="{% url 'flota:salida_list' %}">Abrir horarios</a>
+      <a class="ti-btn" href="{% url 'flota:tv_horarios' %}">TV Horarios</a>
+    </div>
+  </div>
+  {% endif %}
 
-      <div class="mt-3 overflow-x-auto">
-        <table class="ti-table">
-          <thead class="ti-thead">
-            <tr>
-              <th class="ti-th">Fecha</th>
-              <th class="ti-th">Tipo</th>
-              <th class="ti-th">Producto</th>
-              <th class="ti-th">Origen</th>
-              <th class="ti-th">Destino</th>
-              <th class="ti-th text-right">Cantidad</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for m in movimientos_recientes %}
-              <tr class="ti-tr">
-                <td class="ti-td text-xs tabular-nums">{{ m.fecha|date:"d/m H:i" }}</td>
-                <td class="ti-td">
-                  {% if m.tipo == "EGRESO" %}
-                    <span class="ti-badge-high">Egreso</span>
-                  {% elif m.tipo == "INGRESO" %}
-                    <span class="ti-badge-ok">Ingreso</span>
-                  {% elif m.tipo == "AJUSTE" %}
-                    <span class="ti-badge-info">Ajuste</span>
-                  {% else %}
-                    <span class="ti-badge-muted">Transfer.</span>
-                  {% endif %}
-                </td>
-                <td class="ti-td">
-                  <div class="font-semibold">{{ m.producto.codigo }}</div>
-                  <div class="text-xs ti-subtitle truncate">{{ m.producto.nombre }}</div>
-                </td>
-                <td class="ti-td tabular-nums">{{ m.ubicacion.codigo }}</td>
-                <td class="ti-td tabular-nums">
-                  {% if m.ubicacion_destino %}{{ m.ubicacion_destino.codigo }}{% else %}—{% endif %}
-                </td>
-                <td class="ti-td text-right tabular-nums">{{ m.cantidad }}</td>
-              </tr>
-            {% empty %}
-              <tr class="ti-tr">
-                <td class="ti-td" colspan="6"><div class="text-xs ti-subtitle">Sin movimientos.</div></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+  {% if perms.flota.view_partediario %}
+  <div class="ti-card p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-lg font-semibold">Taller (partes)</div>
+        <div class="text-sm ti-subtitle mt-1">Abiertos / proceso / críticos</div>
+      </div>
+      {% if kpi_partes_criticos %}
+        <span class="ti-badge-critical">Crítico</span>
+      {% elif kpi_partes_abiertos or kpi_partes_en_proceso %}
+        <span class="ti-badge-high">Atención</span>
+      {% else %}
+        <span class="ti-badge-ok">OK</span>
+      {% endif %}
+    </div>
+
+    <div class="grid grid-cols-3 gap-2 mt-3">
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Abiertos</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_partes_abiertos|default:0 }}</div>
+      </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Proceso</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_partes_en_proceso|default:0 }}</div>
+      </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Críticos</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_partes_criticos|default:0 }}</div>
       </div>
     </div>
 
-  </section>
+    <div class="mt-3 flex flex-wrap gap-2">
+      <a class="ti-btn" href="{% url 'flota:parte_list' %}">Abrir partes</a>
+      <a class="ti-btn" href="{% url 'flota:tv_taller' %}">TV Taller</a>
+    </div>
+  </div>
+  {% endif %}
 
-  <!-- Vencimientos VTV -->
-  <section class="ti-card p-4" id="vencimientos">
-    <div class="flex items-center justify-between gap-3">
-      <div>
-        <div class="text-sm font-semibold">Vencimientos VTV</div>
-        <div class="text-xs ti-subtitle">Vencido/Hoy = crítico · 1-7 días = alta · sin fecha = pendiente</div>
+  {% if perms.inventario.view_producto or perms.inventario.view_movimientostock %}
+  <div class="ti-card p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-lg font-semibold">Inventario</div>
+        <div class="text-sm ti-subtitle mt-1">Con stock / bajo mínimo / sin stock</div>
       </div>
-      <a class="ti-btn" href="{% url 'flota:colectivo_list' %}">Ver flota</a>
+      {% if inv_productos_sin_stock %}
+        <span class="ti-badge-critical">Crítico</span>
+      {% elif inv_productos_bajo_min %}
+        <span class="ti-badge-high">Atención</span>
+      {% else %}
+        <span class="ti-badge-ok">OK</span>
+      {% endif %}
     </div>
 
-    <div class="mt-3 overflow-x-auto">
-      <table class="ti-table">
-        <thead class="ti-thead">
-          <tr>
-            <th class="ti-th">Interno</th>
-            <th class="ti-th">Dominio</th>
-            <th class="ti-th">Fecha</th>
-            <th class="ti-th text-right">Días</th>
-            <th class="ti-th">Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in vencimientos_vtv %}
-            <tr class="ti-tr">
-              <td class="ti-td font-semibold tabular-nums">{{ row.interno }}</td>
-              <td class="ti-td">{{ row.dominio|default:"—" }}</td>
-              <td class="ti-td">{% if row.fecha %}{{ row.fecha|date:"d/m/Y" }}{% else %}—{% endif %}</td>
-              <td class="ti-td text-right tabular-nums">{% if row.dias is not None %}{{ row.dias }}{% else %}—{% endif %}</td>
-              <td class="ti-td">
-                {% if row.badge == "critical" %}
-                  <span class="ti-badge-critical">{{ row.estado }}</span>
-                {% elif row.badge == "high" %}
-                  <span class="ti-badge-high">{{ row.estado }}</span>
-                {% elif row.badge == "ok" %}
-                  <span class="ti-badge-ok">{{ row.estado }}</span>
-                {% else %}
-                  <span class="ti-badge-muted">{{ row.estado }}</span>
-                {% endif %}
-              </td>
-            </tr>
-          {% empty %}
-            <tr class="ti-tr"><td class="ti-td" colspan="5"><div class="text-xs ti-subtitle">Sin datos.</div></td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="grid grid-cols-3 gap-2 mt-3">
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Con stock</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ inv_productos_con_stock|default:0 }}</div>
+      </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Bajo mín.</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ inv_productos_bajo_min|default:0 }}</div>
+      </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Sin stock</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ inv_productos_sin_stock|default:0 }}</div>
+      </div>
     </div>
-  </section>
 
-</div>
-{% endblock %}
+    <div class="mt-3 flex flex-wrap gap-2">
+      {% if perms.inventario.view_producto %}
+        <a class="ti-btn" href="{% url 'inventario:producto_list' %}">Productos</a>
+      {% endif %}
+      {% if perms.inventario.view_movimientostock %}
+        <a class="ti-btn" href="{% url 'inventario:movimiento_list' %}">Movimientos</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 
-{% block extra_js %}
-<script src="{% static 'js/pages/dashboard.js' %}" defer></script>
+  <div class="ti-card p-4">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-lg font-semibold">Auditoría</div>
+        <div class="text-sm ti-subtitle mt-1">Actividad + errores + seguimiento</div>
+      </div>
+      {% if kpi_audit_hoy_err %}
+        <span class="ti-badge-high">Atención</span>
+      {% else %}
+        <span class="ti-badge-ok">OK</span>
+      {% endif %}
+    </div>
+
+    <div class="grid grid-cols-3 gap-2 mt-3">
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Eventos hoy</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_audit_hoy_total|default:0 }}</div>
+      </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Errores</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_audit_hoy_err|default:0 }}</div>
+      </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Lentos</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_audit_hoy_slow|default:0 }}</div>
+      </div>
+    </div>
+
+    <div class="mt-3 flex flex-wrap gap-2">
+      <a class="ti-btn" href="{% url 'auditoria:audit_list' %}">Abrir auditoría</a>
+      <a class="ti-btn" href="{% url 'auditoria:audit_export_csv' %}">Exportar CSV</a>
+    </div>
+  </div>
+
+</section>
+
+<section class="ti-card p-4">
+  <div class="text-lg font-semibold">Módulos planificados</div>
+  <div class="text-sm ti-subtitle mt-1">Solo para tener el panorama de lo que viene.</div>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mt-3">
+    <div class="ti-card p-3"><div class="font-semibold">Reportes</div><div class="text-sm ti-subtitle mt-1">Diario / semanal</div></div>
+    <div class="ti-card p-3"><div class="font-semibold">Compras</div><div class="text-sm ti-subtitle mt-1">Proveedores</div></div>
+    <div class="ti-card p-3"><div class="font-semibold">Combustible</div><div class="text-sm ti-subtitle mt-1">Cargas</div></div>
+    <div class="ti-card p-3"><div class="font-semibold">OT Taller</div><div class="text-sm ti-subtitle mt-1">Órdenes</div></div>
+    <div class="ti-card p-3"><div class="font-semibold">Mantenimientos</div><div class="text-sm ti-subtitle mt-1">Preventivo</div></div>
+    <div class="ti-card p-3"><div class="font-semibold">Gomería</div><div class="text-sm ti-subtitle mt-1">Neumáticos</div></div>
+  </div>
+</section>
+
+{% elif perms.flota.add_partediario and perms.flota.view_salidaprogramada and not perms.inventario.view_producto and not perms.inventario.view_movimientostock and not perms.flota.view_colectivo and not perms.flota.view_partediario and not perms.auditoria.view_auditevent %}
+
+<section class="ti-card p-4">
+  <div class="text-xl font-semibold">Inicio (Chofer)</div>
+  <div class="text-sm ti-subtitle mt-1">Vas a ver solo lo necesario: horarios y reporte de parte.</div>
+</section>
+
+<section class="ti-card p-4">
+  <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div class="min-w-0">
+      <div class="text-lg font-semibold">Accesos directos</div>
+      <div class="text-sm ti-subtitle mt-1">Acciones disponibles para chofer.</div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <a class="ti-btn" href="{% url 'flota:salida_list' %}">Horarios</a>
+      <a class="ti-btn" href="{% url 'flota:chofer_parte_create' %}">Reportar parte</a>
+      <a class="ti-btn" href="{% url 'flota:tv_horarios' %}">TV Horarios</a>
+    </div>
+  </div>
+</section>
+
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+  <div class="ti-card p-4">
+    <div class="text-lg font-semibold">Horarios</div>
+    <div class="text-sm ti-subtitle mt-1">Solo lectura.</div>
+
+    <div class="grid grid-cols-3 gap-2 mt-3">
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Total</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_salidas_hoy_total|default:0 }}</div>
+      </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Especial</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_salidas_hoy_especial|default:0 }}</div>
+      </div>
+      <div class="ti-card p-3">
+        <div class="text-sm ti-subtitle">Sin chofer</div>
+        <div class="text-2xl font-semibold tabular-nums">{{ kpi_salidas_hoy_sin_asignar|default:0 }}</div>
+      </div>
+    </div>
+
+    <div class="mt-3 flex flex-wrap gap-2">
+      <a class="ti-btn" href="{% url 'flota:salida_list' %}">Abrir horarios</a>
+      <a class="ti-btn" href="{% url 'flota:tv_horarios' %}">TV Horarios</a>
+    </div>
+  </div>
+
+  <div class="ti-card p-4">
+    <div class="text-lg font-semibold">Reportar parte</div>
+    <div class="text-sm ti-subtitle mt-1">Informá problemas o fallas detectadas.</div>
+
+    <div class="ti-card p-3 mt-3">
+      <div class="font-semibold">Recomendación</div>
+      <div class="text-sm ti-subtitle mt-1">Completá lo que sepas. Taller puede ampliar después.</div>
+    </div>
+
+    <div class="mt-3">
+      <a class="ti-btn" href="{% url 'flota:chofer_parte_create' %}">Cargar parte</a>
+    </div>
+  </div>
+
+</section>
+
+{% else %}
+
+<section class="ti-card p-4">
+  <div class="text-xl font-semibold">Inicio</div>
+  <div class="text-sm ti-subtitle mt-1">Resumen según permisos.</div>
+</section>
+
+<section class="ti-card p-4">
+  <div class="text-lg font-semibold">Accesos directos</div>
+  <div class="text-sm ti-subtitle mt-1">Se muestran solo los módulos habilitados.</div>
+
+  <div class="flex flex-wrap gap-2 mt-3">
+    {% if perms.flota.view_colectivo %}
+      <a class="ti-btn" href="{% url 'flota:colectivo_list' %}">Unidades</a>
+    {% endif %}
+    {% if perms.flota.view_salidaprogramada %}
+      <a class="ti-btn" href="{% url 'flota:salida_list' %}">Horarios</a>
+    {% endif %}
+    {% if perms.flota.view_partediario %}
+      <a class="ti-btn" href="{% url 'flota:parte_list' %}">Partes</a>
+    {% endif %}
+    {% if perms.inventario.view_producto %}
+      <a class="ti-btn" href="{% url 'inventario:producto_list' %}">Inventario</a>
+    {% endif %}
+    {% if perms.inventario.view_movimientostock %}
+      <a class="ti-btn" href="{% url 'inventario:movimiento_list' %}">Movimientos</a>
+    {% endif %}
+    {% if perms.flota.view_salidaprogramada %}
+      <a class="ti-btn" href="{% url 'flota:tv_horarios' %}">TV Horarios</a>
+    {% endif %}
+    {% if perms.flota.view_partediario %}
+      <a class="ti-btn" href="{% url 'flota:tv_taller' %}">TV Taller</a>
+    {% endif %}
+  </div>
+</section>
+
+{% endif %}
+
 {% endblock %}

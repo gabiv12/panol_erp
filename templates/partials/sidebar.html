@@ -1,42 +1,64 @@
 {% load static %}
+
+
+
 <div class="ti-sidebar">
 
   <div class="ti-sidebar__brand">
     <div class="flex items-center gap-3">
-      <div class="shrink-0">
-        <img src="{% static 'img/fondo_blanco.svg' %}" alt="La Termal ERP" class="dark:hidden h-10 w-10" />
-        <img src="{% static 'img/fondo_oscuro.svg' %}" alt="La Termal ERP" class="hidden dark:block h-10 w-10" />
+      <div class="relative h-10 w-10 shrink-0">
+        <img src="{% static 'img/fondo_blanco.svg' %}" alt="La Termal ERP" class="h-10 w-10 rounded-full bg-white p-1 dark:hidden" />
+        <img src="{% static 'img/fondo_oscuro.svg' %}" alt="La Termal ERP" class="h-10 w-10 rounded-full bg-transparent p-0 hidden dark:block" />
       </div>
-      <div class="min-w-0">
-        <div class="ti-brand__title">La Termal ERP</div>
-        <div class="ti-brand__subtitle">Flota · Taller · Inventario</div>
+      <div class="leading-tight min-w-0">
+        <div class="ti-brand__title truncate">La Termal ERP</div>
+        <div class="ti-brand__subtitle truncate">Operación diaria</div>
       </div>
     </div>
   </div>
 
-  <nav class="ti-nav">
+  {% url 'core:dashboard' as url_dashboard %}
 
-    {% url 'core:dashboard' as url_dashboard %}
+  {% url 'flota:colectivo_list' as url_colectivos %}
+  {% url 'flota:salida_list' as url_salidas %}
+  {% url 'flota:parte_list' as url_partes %}
+  {% url 'flota:chofer_list' as url_choferes %}
+  {% url 'flota:chofer_parte_create' as url_parte_chofer %}
 
-    {% url 'flota:colectivo_list' as url_colectivos %}
-    {% url 'flota:salida_list' as url_horarios %}
-    {% url 'flota:salida_diagrama_print' as url_diagrama %}
-    {% url 'flota:parte_list' as url_partes %}
-    {% url 'flota:chofer_list' as url_choferes %}
-    {% url 'flota:chofer_parte_create' as url_parte_chofer %}
+  {% url 'inventario:producto_list' as url_productos %}
+  {% url 'inventario:movimiento_list' as url_movimientos %}
 
-    {% url 'inventario:producto_list' as url_inventario %}
-    {% url 'inventario:movimiento_list' as url_movimientos %}
+  {% url 'usuarios:usuario_list' as url_usuarios %}
+  {% url 'auditoria:audit_list' as url_auditoria %}
 
-    {% url 'usuarios:usuario_list' as url_usuarios %}
+  {% url 'flota:tv_horarios' as url_tv_horarios %}
+  {% url 'flota:tv_taller' as url_tv_taller %}
 
-    {% url 'flota:tv_horarios' as url_tv_horarios %}
-    {% url 'flota:tv_taller' as url_tv_taller %}
+  <div class="px-4 pb-3">
+    <div class="grid grid-cols-2 gap-2">
+      {% if perms.flota.view_salidaprogramada %}
+        <a class="ti-btn w-full justify-center" href="{{ url_salidas }}">Horarios</a>
+      {% endif %}
 
-    <div class="mt-1 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Operación</div>
+      {% if perms.flota.view_partediario %}
+        <a class="ti-btn w-full justify-center" href="{{ url_partes }}">Partes</a>
+      {% elif perms.flota.add_partediario and is_chofer_only %}
+        <a class="ti-btn w-full justify-center" href="{{ url_parte_chofer }}">Reportar parte</a>
+      {% endif %}
+    </div>
+  </div>
 
-    <a href="{{ url_dashboard }}" class="ti-navlink {% if request.path|slice:':10' == '/dashboard' %}ti-navlink-active{% endif %}">
-      <span class="ti-navicon">{% include "partials/svg_home.html" %}</span>
+  <nav class="ti-nav space-y-1">
+
+    <div class="px-3 pt-1 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Operación</div>
+
+    <a class="ti-navlink {% if request.path|slice:':10' == '/dashboard' %}ti-navlink-active{% endif %}" href="{{ url_dashboard }}">
+      <span class="ti-navicon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+          <path d="M3 10.5 12 3l9 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 10v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
       <span class="min-w-0">
         <span class="ti-navtitle">Inicio</span>
         <span class="ti-navsub">Panel general</span>
@@ -44,146 +66,222 @@
     </a>
 
     {% if show_flota %}
-      <div class="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Flota</div>
+      <div class="px-3 pt-3 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Flota</div>
 
-      {% if is_chofer_only %}
-        <a href="{{ url_diagrama }}" class="ti-navlink {% if request.path|slice:':19' == '/flota/salidas/diagrama' %}ti-navlink-active{% endif %}">
-          <span class="ti-navicon">{% include "partials/svg_route.html" %}</span>
+      {% if perms.flota.view_colectivo %}
+        <a class="ti-navlink {% if request.path|slice:':16' == '/flota/colectivos' %}ti-navlink-active{% endif %}" href="{{ url_colectivos }}">
+          <span class="ti-navicon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+              <path d="M6 18V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6 10h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M7 18a2 2 0 1 0 4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M13 18a2 2 0 1 0 4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="ti-navtitle">Unidades</span>
+            <span class="ti-navsub">Estado y vencimientos</span>
+          </span>
+        </a>
+      {% endif %}
+
+      {% if perms.flota.view_salidaprogramada %}
+        <a class="ti-navlink {% if request.path|slice:':13' == '/flota/salidas' %}ti-navlink-active{% endif %}" href="{{ url_salidas }}">
+          <span class="ti-navicon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+              <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
           <span class="min-w-0">
             <span class="ti-navtitle">Horarios</span>
-            <span class="ti-navsub">Diagrama del día</span>
+            <span class="ti-navsub">Salidas y especiales</span>
           </span>
         </a>
+      {% endif %}
 
-        <a href="{{ url_parte_chofer }}" class="ti-navlink {% if request.path|slice:':23' == '/flota/chofer/partes' %}ti-navlink-active{% endif %}">
-          <span class="ti-navicon">{% include "partials/svg_wrench.html" %}</span>
+      {% if show_flota_full and perms.flota.view_partediario %}
+        <a class="ti-navlink {% if request.path|slice:':13' == '/flota/partes' %}ti-navlink-active{% endif %}" href="{{ url_partes }}">
+          <span class="ti-navicon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+              <path d="M9 3h6a2 2 0 0 1 2 2v2H7V5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M7 7H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M8 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
           <span class="min-w-0">
-            <span class="ti-navtitle">Cargar parte</span>
-            <span class="ti-navsub">Formulario simple</span>
+            <span class="ti-navtitle">Partes diarios</span>
+            <span class="ti-navsub">Registro y seguimiento</span>
           </span>
         </a>
-      {% else %}
-        {% if show_flota_full %}
-          <a href="{{ url_colectivos }}" class="ti-navlink {% if request.path|slice:':16' == '/flota/colectivos' %}ti-navlink-active{% endif %}">
-            <span class="ti-navicon">{% include "partials/svg_bus.html" %}</span>
-            <span class="min-w-0">
-              <span class="ti-navtitle">Unidades</span>
-              <span class="ti-navsub">Estado y vencimientos</span>
-            </span>
-          </a>
+      {% elif is_chofer_only and perms.flota.add_partediario %}
+        <a class="ti-navlink {% if request.path|slice:':19' == '/flota/chofer/partes' %}ti-navlink-active{% endif %}" href="{{ url_parte_chofer }}">
+          <span class="ti-navicon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+              <path d="M12 5v14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="ti-navtitle">Reportar parte</span>
+            <span class="ti-navsub">Carga rápida (chofer)</span>
+          </span>
+        </a>
+      {% endif %}
 
-          <a href="{{ url_partes }}" class="ti-navlink {% if request.path|slice:':13' == '/flota/partes' %}ti-navlink-active{% endif %}">
-            <span class="ti-navicon">{% include "partials/svg_wrench.html" %}</span>
-            <span class="min-w-0">
-              <span class="ti-navtitle">Partes diarios</span>
-              <span class="ti-navsub">Registro y seguimiento</span>
-            </span>
-          </a>
-
-          <a href="{{ url_horarios }}" class="ti-navlink {% if request.path|slice:':13' == '/flota/salidas' %}ti-navlink-active{% endif %}">
-            <span class="ti-navicon">{% include "partials/svg_calendar.html" %}</span>
-            <span class="min-w-0">
-              <span class="ti-navtitle">Horarios</span>
-              <span class="ti-navsub">Salidas y especiales</span>
-            </span>
-          </a>
-
-          <a href="{{ url_choferes }}" class="ti-navlink {% if request.path|slice:':14' == '/flota/choferes' %}ti-navlink-active{% endif %}">
-            <span class="ti-navicon">{% include "partials/svg_user.html" %}</span>
-            <span class="min-w-0">
-              <span class="ti-navtitle">Choferes</span>
-              <span class="ti-navsub">Legajo básico</span>
-            </span>
-          </a>
-        {% else %}
-          <a href="{{ url_diagrama }}" class="ti-navlink {% if request.path|slice:':19' == '/flota/salidas/diagrama' %}ti-navlink-active{% endif %}">
-            <span class="ti-navicon">{% include "partials/svg_route.html" %}</span>
-            <span class="min-w-0">
-              <span class="ti-navtitle">Horarios</span>
-              <span class="ti-navsub">Diagrama del día</span>
-            </span>
-          </a>
-        {% endif %}
+      {% if show_flota_full and perms.flota.view_chofer %}
+        <a class="ti-navlink {% if request.path|slice:':14' == '/flota/choferes' %}ti-navlink-active{% endif %}" href="{{ url_choferes }}">
+          <span class="ti-navicon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+              <path d="M20 21a8 8 0 1 0-16 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="ti-navtitle">Choferes</span>
+            <span class="ti-navsub">Legajo básico</span>
+          </span>
+        </a>
       {% endif %}
     {% endif %}
 
     {% if show_inventario %}
-      <div class="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Inventario</div>
+      <div class="px-3 pt-3 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Inventario</div>
 
-      <a href="{{ url_inventario }}" class="ti-navlink {% if request.path|slice:':20' == '/inventario/productos' %}ti-navlink-active{% endif %}">
-        <span class="ti-navicon">{% include "partials/svg_box.html" %}</span>
-        <span class="min-w-0">
-          <span class="ti-navtitle">Inventario</span>
-          <span class="ti-navsub">Productos, stock y movimientos</span>
-        </span>
-      </a>
+      {% if perms.inventario.view_producto %}
+        <a class="ti-navlink {% if request.path|slice:':20' == '/inventario/productos' %}ti-navlink-active{% endif %}" href="{{ url_productos }}">
+          <span class="ti-navicon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+              <path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 7l8 4 8-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 11v10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="ti-navtitle">Productos</span>
+            <span class="ti-navsub">Catálogo y stock</span>
+          </span>
+        </a>
+      {% endif %}
 
-      <a href="{{ url_movimientos }}" class="ti-navlink {% if request.path|slice:':22' == '/inventario/movimientos' %}ti-navlink-active{% endif %}">
-        <span class="ti-navicon">{% include "partials/svg_arrows.html" %}</span>
-        <span class="min-w-0">
-          <span class="ti-navtitle">Movimientos</span>
-          <span class="ti-navsub">Entradas / salidas / ajustes</span>
-        </span>
-      </a>
+      {% if perms.inventario.view_movimientostock %}
+        <a class="ti-navlink {% if request.path|slice:':22' == '/inventario/movimientos' %}ti-navlink-active{% endif %}" href="{{ url_movimientos }}">
+          <span class="ti-navicon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+              <path d="M7 7h10l-2-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M17 17H7l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="ti-navtitle">Movimientos</span>
+            <span class="ti-navsub">Entradas / salidas / ajustes</span>
+          </span>
+        </a>
+      {% endif %}
     {% endif %}
 
-    {% if show_admin %}
-      <div class="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Sistema</div>
+    {% if request.user.is_superuser or perms.auditoria.view_auditevent %}
+      <div class="px-3 pt-3 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Sistema</div>
 
-      <a href="{{ url_usuarios }}" class="ti-navlink {% if request.path|slice:':9' == '/usuarios' %}ti-navlink-active{% endif %}">
-        <span class="ti-navicon">{% include "partials/svg_settings.html" %}</span>
+      {% if request.user.is_superuser %}
+        <a class="ti-navlink {% if request.path|slice:':10' == '/usuarios/' %}ti-navlink-active{% endif %}" href="{{ url_usuarios }}">
+          <span class="ti-navicon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+              <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M20 21a8 8 0 1 0-16 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M19 10v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M17 12h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="ti-navtitle">Usuarios</span>
+            <span class="ti-navsub">Accesos y roles</span>
+          </span>
+        </a>
+      {% endif %}
+
+      <a class="ti-navlink {% if request.path|slice:':11' == '/auditoria/' %}ti-navlink-active{% endif %}" href="{{ url_auditoria }}">
+        <span class="ti-navicon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+            <path d="M4 19V5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M4 19h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M7 15l3-3 3 2 4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
         <span class="min-w-0">
-          <span class="ti-navtitle">Usuarios</span>
-          <span class="ti-navsub">Accesos y roles</span>
+          <span class="ti-navtitle">Auditoría</span>
+          <span class="ti-navsub">Historial de acciones</span>
         </span>
       </a>
     {% endif %}
 
     {% if show_tv %}
-      <div class="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Pantallas</div>
+      <div class="px-3 pt-3 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Pantallas</div>
 
-      <a href="{{ url_tv_horarios }}" class="ti-navlink {% if request.path|slice:':17' == '/flota/tv/horarios' %}ti-navlink-active{% endif %}">
-        <span class="ti-navicon">{% include "partials/svg_chart.html" %}</span>
-        <span class="min-w-0">
-          <span class="ti-navtitle">TV Horarios</span>
-          <span class="ti-navsub">Próximas salidas</span>
-        </span>
-      </a>
+      {% if perms.flota.view_salidaprogramada %}
+        <a class="ti-navlink {% if request.path|slice:':17' == '/flota/tv/horarios' %}ti-navlink-active{% endif %}" href="{{ url_tv_horarios }}">
+          <span class="ti-navicon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+              <path d="M4 6h16v12H4z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M7 10h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M7 14h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="ti-navtitle">TV Horarios</span>
+            <span class="ti-navsub">Próximas salidas</span>
+          </span>
+        </a>
+      {% endif %}
 
-      <a href="{{ url_tv_taller }}" class="ti-navlink {% if request.path|slice:':15' == '/flota/tv/taller' %}ti-navlink-active{% endif %}">
-        <span class="ti-navicon">{% include "partials/svg_wrench.html" %}</span>
-        <span class="min-w-0">
-          <span class="ti-navtitle">TV Taller</span>
-          <span class="ti-navsub">Partes y prioridad</span>
-        </span>
-      </a>
+      {% if perms.flota.view_partediario %}
+        <a class="ti-navlink {% if request.path|slice:':15' == '/flota/tv/taller' %}ti-navlink-active{% endif %}" href="{{ url_tv_taller }}">
+          <span class="ti-navicon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5">
+              <path d="M14.5 6.5 17.5 3.5l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10 7a4 4 0 1 0 7 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M2.5 21.5 12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="min-w-0">
+            <span class="ti-navtitle">TV Taller</span>
+            <span class="ti-navsub">Partes y prioridad</span>
+          </span>
+        </a>
+      {% endif %}
     {% endif %}
 
-    {% if show_proximamente %}
-      <div class="mt-4 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Próximamente</div>
+    {# Próximamente: solo superusuario (evita ruido para gerencia no técnica) #}
+    {% if show_proximamente and request.user.is_superuser %}
+      <div class="px-3 pt-3 text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Próximamente</div>
 
-      <div class="ti-navlink ti-navlink-disabled">
-        <span class="ti-navicon">{% include "partials/svg_box.html" %}</span>
-        <span class="min-w-0">
-          <span class="ti-navtitle">Compras</span>
-          <span class="ti-navsub">Proveedores y facturas (Próx.)</span>
+      <div class="ti-navlink ti-navlink-disabled" aria-disabled="true">
+        <span class="ti-navicon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5"><path d="M3 7h18v14H3z" stroke="currentColor" stroke-width="1.8"/><path d="M7 7V3h10v4" stroke="currentColor" stroke-width="1.8"/></svg>
         </span>
+        <span class="min-w-0"><span class="ti-navtitle">Compras</span><span class="ti-navsub">Proveedores y facturas</span></span>
       </div>
 
-      <div class="ti-navlink ti-navlink-disabled">
-        <span class="ti-navicon">{% include "partials/svg_bell.html" %}</span>
-        <span class="min-w-0">
-          <span class="ti-navtitle">Alertas</span>
-          <span class="ti-navsub">Triage (Próx.)</span>
+      <div class="ti-navlink ti-navlink-disabled" aria-disabled="true">
+        <span class="ti-navicon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5"><path d="M7 4h10v6H7z" stroke="currentColor" stroke-width="1.8"/><path d="M6 10h12v10H6z" stroke="currentColor" stroke-width="1.8"/></svg>
         </span>
+        <span class="min-w-0"><span class="ti-navtitle">Combustible</span><span class="ti-navsub">Cargas y consumo</span></span>
       </div>
 
-      <div class="ti-navlink ti-navlink-disabled">
-        <span class="ti-navicon">{% include "partials/svg_chart.html" %}</span>
-        <span class="min-w-0">
-          <span class="ti-navtitle">Reportes</span>
-          <span class="ti-navsub">Operativos (Próx.)</span>
+      <div class="ti-navlink ti-navlink-disabled" aria-disabled="true">
+        <span class="ti-navicon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5"><path d="M4 19h16" stroke="currentColor" stroke-width="1.8"/><path d="M7 19V9h10v10" stroke="currentColor" stroke-width="1.8"/></svg>
         </span>
+        <span class="min-w-0"><span class="ti-navtitle">Taller OT</span><span class="ti-navsub">Órdenes de trabajo</span></span>
+      </div>
+
+      <div class="ti-navlink ti-navlink-disabled" aria-disabled="true">
+        <span class="ti-navicon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" class="h-5 w-5"><path d="M4 19V5" stroke="currentColor" stroke-width="1.8"/><path d="M4 19h16" stroke="currentColor" stroke-width="1.8"/><path d="M7 15l3-3 3 2 4-6" stroke="currentColor" stroke-width="1.8"/></svg>
+        </span>
+        <span class="min-w-0"><span class="ti-navtitle">Reportes</span><span class="ti-navsub">Operativos</span></span>
       </div>
     {% endif %}
 
@@ -191,10 +289,9 @@
 
   <div class="ti-sidebar__footer">
     <div class="min-w-0">
-      <div class="ti-user__name">{{ request.user.username }}</div>
-      <div class="ti-user__subtitle">Sesión activa</div>
+      <div class="ti-user__name truncate">{{ request.user.username }}</div>
+      <div class="ti-user__subtitle truncate">Sesión activa</div>
     </div>
-
     <form method="post" action="{% url 'logout' %}">
       {% csrf_token %}
       <button type="submit" class="ti-btn">Salir</button>
