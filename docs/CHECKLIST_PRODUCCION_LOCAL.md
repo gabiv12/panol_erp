@@ -21,3 +21,9 @@
 - En desarrollo con `DEBUG=True` Django muestra pantalla de debug.
 - Para verificar páginas 404/500 personalizadas: ejecutar con `DEBUG=False` y provocar un 404/500 controlado.
 
+## Auditoría (Gerencia)
+
+- `python manage.py migrate`
+- `python manage.py init_auditoria`
+- Verificar acceso: `/auditoria/`
+

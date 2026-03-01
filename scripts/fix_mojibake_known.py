@@ -1,4 +1,4 @@
-﻿import pathlib
+import pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 EXTS = {".py",".html",".htm",".js",".css",".md",".txt"}

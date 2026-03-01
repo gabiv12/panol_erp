@@ -1,4 +1,4 @@
-﻿from django.urls import path
+from django.urls import path
 
 from . import partes_views
 from . import salidas_views
@@ -29,8 +29,7 @@ urlpatterns = [
     path("partes/<int:pk>/", partes_views.ParteDiarioDetailView.as_view(), name="parte_detail"),
     path("partes/<int:pk>/adjuntos/agregar/", partes_views.parte_adjunto_add, name="parte_adjunto_add"),
     path("partes/<int:pk>/adjuntos/<int:adj_id>/eliminar/", partes_views.parte_adjunto_delete, name="parte_adjunto_delete"),
-
-        path("chofer/partes/nuevo/", partes_views.parte_chofer_create, name="chofer_parte_create"),
+    path("chofer/partes/nuevo/", partes_views.parte_chofer_create, name="chofer_parte_create"),
 
     # Horarios / Diagrama
     path("salidas/", salidas_views.SalidaProgramadaListView.as_view(), name="salida_list"),
@@ -52,16 +51,13 @@ urlpatterns = [
     # API
     path("api/colectivo-info/", salidas_views.api_colectivo_info, name="api_colectivo_info"),
 
-    # Pantalla TV
+    # Pantallas TV
     path("tv/horarios/", salidas_views.tv_horarios, name="tv_horarios"),
     path("tv/taller/", partes_views.tv_taller, name="tv_taller"),
 
+    # Choferes
     path("choferes/", choferes_views.chofer_list, name="chofer_list"),
     path("choferes/nuevo/", choferes_views.chofer_create, name="chofer_create"),
     path("choferes/<int:pk>/editar/", choferes_views.chofer_update, name="chofer_update"),
     path("choferes/<int:pk>/toggle/", choferes_views.chofer_toggle_activo, name="chofer_toggle"),
 ]
-
-
-
-

@@ -16,3 +16,12 @@ python manage.py seed_horarios_fijos --fecha 2026-02-27 --days 60
 - Manual: `docs/MANUAL_USUARIO.md`
 - Capturas: `docs/_img/`
 - Plan de pruebas manuales: `docs/PLAN_PRUEBAS_MANUALES.md`
+
+## Auditoría (Gerencia)
+
+```powershell
+python manage.py migrate
+python manage.py init_auditoria
+```
+
+Acceso: `/auditoria/`.

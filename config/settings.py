@@ -1,4 +1,4 @@
-﻿import os
+import os
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "flota",
     "inventario.apps.InventarioConfig",
     "adjuntos.apps.AdjuntosConfig",
+    "auditoria.apps.AuditoriaConfig",
 ]
 
 MIDDLEWARE = [
@@ -48,6 +49,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "auditoria.middleware.AuditMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 

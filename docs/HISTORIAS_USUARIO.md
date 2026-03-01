@@ -225,3 +225,175 @@ Enfocado a operación real (offline-first, usuarios no técnicos) y cambios mín
 - Reportes operativos y notificaciones
 - Gomería (cubiertas)
 
+## 10) Módulo: Inventario (ampliación operativa + ubicaciones físicas)
+
+### HU-INV-04 — Ubicaciones físicas jerárquicas (Depósito/Pasillo/Módulo/Nivel/Posición)
+Como **encargado de Pañol**  
+Quiero **definir ubicaciones físicas reales** (depósito, pasillo, módulo, nivel, posición)  
+Para **encontrar repuestos rápido y sin dudas**, y que cualquier persona pueda ubicar un ítem.
+
+**Criterios de aceptación**
+- Se pueden crear ubicaciones con un **código único** (ej: `DP-A-M02-N03-P01`).
+- Se puede armar un **layout** (estructura completa) para un depósito con pasillos/módulos/niveles/posiciones.
+- Se puede **exportar a CSV** la lista de ubicaciones.
+- Se puede **importar/actualizar por CSV** (sin romper códigos existentes).
+- En la UI se puede **buscar** por código o nombre y ver el “camino” (depósito → pasillo → …).
+
+---
+
+### HU-INV-05 — Ordenar el depósito en el sistema y luego acomodar físicamente
+Como **encargado de Pañol**  
+Quiero **cargar primero el orden “ideal” en el sistema**  
+Para luego **acomodar físicamente el depósito** siguiendo esa estructura y que el sistema guíe el reordenamiento.
+
+**Criterios de aceptación**
+- Puedo crear ubicaciones antes de mover físicamente nada.
+- Puedo listar “ubicaciones vacías” y “ubicaciones con stock”.
+- Puedo registrar reubicaciones para ir pasando productos a su lugar final.
+
+---
+
+### HU-INV-06 — Carga inicial de stock (arranque) por CSV
+Como **encargado de Pañol**  
+Quiero **cargar el stock inicial por CSV**  
+Para **poner el sistema en marcha** sin tener que cargar movimiento por movimiento.
+
+**Criterios de aceptación**
+- El CSV permite: producto, ubicación, cantidad.
+- Valida que existan producto y ubicación.
+- Permite “dry-run” (simulación) antes de aplicar.
+- Al aplicar, deja `StockActual` consistente y registra auditoría/movimiento de tipo ajuste inicial si corresponde (según decisión de implementación).
+
+---
+
+### HU-INV-07 — Reubicaciones/Transferencias (incluye masivo por CSV)
+Como **encargado de Pañol**  
+Quiero **mover stock entre ubicaciones** (transferencias)  
+Para reflejar **reordenamientos** y también movimientos internos del depósito.
+
+**Criterios de aceptación**
+- Transferencia descuenta de origen y suma en destino en una sola operación.
+- Si no hay stock suficiente en origen, bloquea o informa error.
+- Soporta CSV para reubicaciones masivas (ej: “pasar todo el pasillo A al pasillo B”).
+- Registra quién hizo la operación y una referencia/observación.
+
+---
+
+### HU-INV-08 — Cantidades enteras vs decimales según unidad de medida
+Como **usuario de Inventario**  
+Quiero que el sistema **muestre y valide cantidades** según la unidad (entera o decimal)  
+Para evitar errores (ej: “2.500 unidades” no tiene sentido si la unidad es “unidad”, pero sí si es “litro/kg”).
+
+**Criterios de aceptación**
+- Si `UnidadMedida.permite_decimales = False`, el sistema obliga cantidades enteras (o redondea según reglas definidas).
+- Si permite decimales, muestra con 3 decimales o el formato definido.
+- En listados y formularios, el usuario entiende claramente el formato.
+
+---
+
+### HU-INV-09 — Flujo operativo: Solicitud/Entrega/Consumo (Pañol ↔ Mecánico)
+Como **mecánico**  
+Quiero **solicitar repuestos** indicando unidad (colectivo) y motivo  
+Para que **Pañol entregue** lo necesario y quede trazabilidad.
+
+Como **encargado de Pañol**  
+Quiero **registrar la entrega/egreso** contra una solicitud  
+Para descontar stock y dejar registro del responsable.
+
+**Criterios de aceptación**
+- La solicitud se vincula a: colectivo (interno), parte/tarea (si aplica), y lista de repuestos.
+- La entrega genera movimientos de egreso y deja evidencia (quién entregó / quién recibió).
+- Se puede ver historial por colectivo: partes → repuestos consumidos → movimientos.
+
+---
+
+### HU-INV-10 — Integración con Partes Diarios (Chofer → Tarea → Repuestos → Stock)
+Como **chofer**  
+Quiero cargar un **parte diario** del colectivo (problema, severidad, fecha)  
+Para que Taller/Mecánica tenga tareas claras.
+
+Como **mecánico/encargado**  
+Quiero vincular ese parte con **repuestos usados**  
+Para tener trazabilidad completa (incidencia → solución → costo/consumo).
+
+**Criterios de aceptación**
+- Un parte diario se asocia a un colectivo (interno) y puede pasar a “tarea”.
+- Se pueden asociar repuestos sugeridos/usados.
+- Reportes: repuestos más consumidos por tipo de incidencia/colectivo.
+
+---
+
+## 14) Módulo: Gomería / Neumáticos (nuevo módulo propuesto)
+
+### HU-GOM-01 — Alta de neumático/cubierta con identificación interna
+Como **gomero/encargado**  
+Quiero registrar una cubierta con un **número interno**  
+Para identificarla siempre aunque cambie de vehículo.
+
+**Datos típicos**
+- Número interno de cubierta
+- Medida, marca, modelo
+- Estado: NUEVA / RECAPADA
+- Proveedor, costo, fecha de alta
+- Ubicación física (depósito/posición)
+
+---
+
+### HU-GOM-02 — Montaje/Desmontaje en colectivo y posición
+Como **gomero/encargado**  
+Quiero registrar cuando una cubierta se monta o desmonta de un colectivo y en qué posición  
+Para llevar historial completo y saber dónde está cada cubierta.
+
+**Criterios de aceptación**
+- Se registra: colectivo (interno), posición (ej: delantera izq), fecha, km (si se dispone), motivo.
+- La cubierta queda “asignada” al colectivo mientras esté montada.
+
+---
+
+### HU-GOM-03 — Vida útil y alertas (km/días)
+Como **encargado**  
+Quiero medir vida útil de cubiertas  
+Para anticipar recambio/recap y reducir costos por fallas.
+
+**Criterios de aceptación**
+- Cálculo de duración por km o por días (según datos disponibles).
+- Alertas por vencimiento de vida útil o por cantidad de recapados.
+
+---
+
+### HU-GOM-04 — Relación con Inventario (stock + activos serializados)
+Como **encargado**  
+Quiero que el sistema maneje cubiertas como **activos individualizados** (serializados) y también como stock de repuesto  
+Para controlar tanto “la cubierta puntual” como el “inventario disponible”.
+
+**Criterios de aceptación**
+- Una cubierta individual puede tener ubicación física (igual que un repuesto).
+- Movimientos: ingreso compra, transferencia de ubicación, montaje (sale de depósito a unidad), desmontaje (vuelve), baja.
+
+---
+
+## 15) Operación / Demo remota (ngrok)
+
+### HU-OPS-01 — Exponer demo por ngrok sin romper login (CSRF)
+Como **responsable del sistema**  
+Quiero compartir una demo por ngrok para mostrar avances  
+Para que terceros puedan ver el módulo sin estar en la red local.
+
+**Criterios de aceptación**
+- El login funciona por HTTPS detrás de proxy (ngrok) sin error CSRF.
+- Configuración documentada: `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS`, cabecera `SECURE_PROXY_SSL_HEADER`, y configuración de cookies si aplica.
+- Opción de “modo demo” con usuario de prueba y permisos mínimos.
+
+---
+
+## 16) Arquitectura / Base de datos (decisión documentada)
+
+### HU-ARCH-01 — Dev con SQLite y producción con MariaDB (plan de cambio)
+Como **responsable técnico**  
+Quiero mantener SQLite para desarrollo rápido y pasar a MariaDB en producción  
+Para soportar mejor operación real sin frenar el avance del proyecto.
+
+**Criterios de aceptación**
+- Settings por variables de entorno para elegir motor de BD.
+- Procedimiento documentado para migrar y validar datos.
+- Momento recomendado para el cambio: cuando Inventario + Flota + Taller estén estables y testeados.

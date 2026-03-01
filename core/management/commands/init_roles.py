@@ -90,10 +90,10 @@ class Command(BaseCommand):
 
         # ------------------------------------------------------------
         # CHOFER
-        # - solo: crear parte chofer + ver diagrama (salidas) + ver unidades (lectura)
+        # - solo: crear parte chofer + ver diagrama (salidas)
         # ------------------------------------------------------------
         chofer = groups[ROLE_CHOFER]
-        chofer.permissions.add(*_perms_match("flota", ["add_partediario", "view_colectivo", "view_salidaprogramada"]))
+        chofer.permissions.add(*_perms_match("flota", ["add_partediario", "view_salidaprogramada"]))
         # No dar view_partediario para no habilitar listados internos
 
         # ------------------------------------------------------------

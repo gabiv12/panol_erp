@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Auditoría | La Termal ERP{% endblock %}
+{% block page_title %}Auditoría{% endblock %}
+{% block page_subtitle %}Historial de acciones y navegación{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  <div class="ti-card p-4">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+      <div class="md:col-span-2">
+        <label class="ti-label">Buscar</label>
+        <input class="ti-input" type="search" name="q" value="{{ q }}" placeholder="Ruta, vista, acción, IP, usuario..." />
+      </div>
+
+      <div>
+        <label class="ti-label">Usuario</label>
+        <input class="ti-input" type="text" name="username" value="{{ username }}" list="dl_users" placeholder="Ej: admin" />
+        <datalist id="dl_users">
+          {% for u in usernames %}<option value="{{ u }}"></option>{% endfor %}
+        </datalist>
+      </div>
+
+      <div>
+        <label class="ti-label">Área</label>
+        <select class="ti-select" name="app">
+          <option value="">Todas</option>
+          {% for a in apps %}
+            <option value="{{ a }}" {% if a == app %}selected{% endif %}>{{ a }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="ti-label">Acción</label>
+        <select class="ti-select" name="action">
+          <option value="">Todas</option>
+          {% for a in actions %}
+            <option value="{{ a }}" {% if a == action %}selected{% endif %}>{{ a }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="ti-label">Estado</label>
+        <select class="ti-select" name="status">
+          <option value="">Todos</option>
+          <option value="2xx" {% if status == "2xx" %}selected{% endif %}>2xx OK</option>
+          <option value="3xx" {% if status == "3xx" %}selected{% endif %}>3xx Redir</option>
+          <option value="4xx" {% if status == "4xx" %}selected{% endif %}>4xx Cliente</option>
+          <option value="5xx" {% if status == "5xx" %}selected{% endif %}>5xx Error</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="ti-label">Días</label>
+        <select class="ti-select" name="days">
+          <option value="1" {% if days == "1" %}selected{% endif %}>1</option>
+          <option value="7" {% if days == "7" %}selected{% endif %}>7</option>
+          <option value="30" {% if days == "30" %}selected{% endif %}>30</option>
+          <option value="90" {% if days == "90" %}selected{% endif %}>90</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="ti-label">Desde</label>
+        <input class="ti-input" type="date" name="from" value="{{ from }}" />
+      </div>
+
+      <div>
+        <label class="ti-label">Hasta</label>
+        <input class="ti-input" type="date" name="to" value="{{ to }}" />
+      </div>
+
+      <div class="md:col-span-2 flex gap-2">
+        <button type="submit" class="ti-btn-primary w-full">Filtrar</button>
+        <a class="ti-btn w-full" href="/auditoria/export.csv?{{ request.GET.urlencode }}">CSV</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="ti-card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="ti-table">
+        <thead class="ti-thead">
+          <tr>
+            <th class="ti-th">Fecha</th>
+            <th class="ti-th">Usuario</th>
+            <th class="ti-th">Área</th>
+            <th class="ti-th">Acción</th>
+            <th class="ti-th">Ruta</th>
+            <th class="ti-th">Status</th>
+            <th class="ti-th">ms</th>
+            <th class="ti-th">IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in page_obj %}
+            <tr class="ti-tr">
+              <td class="ti-td whitespace-nowrap">{{ it.created_at|date:"Y-m-d H:i:s" }}</td>
+              <td class="ti-td">{{ it.username }}</td>
+              <td class="ti-td">{{ it.app_area }}</td>
+              <td class="ti-td">{{ it.action }}</td>
+              <td class="ti-td break-all">{{ it.method }} {{ it.path }}</td>
+              <td class="ti-td tabular-nums">{{ it.status_code }}</td>
+              <td class="ti-td tabular-nums">{{ it.duration_ms }}</td>
+              <td class="ti-td tabular-nums">{{ it.ip }}</td>
+            </tr>
+          {% empty %}
+            <tr class="ti-tr">
+              <td class="ti-td" colspan="8">Sin registros para el filtro actual.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="p-3 flex items-center justify-between">
+      <div class="text-sm ti-subtitle">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} registros
+      </div>
+
+      <div class="flex gap-2">
+        {% if page_obj.has_previous %}
+          <a class="ti-btn" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+          <a class="ti-btn" href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

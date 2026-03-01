@@ -1,4 +1,4 @@
-﻿from decimal import Decimal
+from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile

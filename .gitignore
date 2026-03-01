@@ -24,3 +24,9 @@ backup_*/
 _patch_apply_*/
 *.zip
 seed/*.json
+
+# Parches / backups locales
+_patch_*/
+backup_patch_*/
+*_patch_apply_*/
+*.zip
