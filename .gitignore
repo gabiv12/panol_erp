@@ -30,3 +30,7 @@ _patch_*/
 backup_patch_*/
 *_patch_apply_*/
 *.zip
+# Reportes generados
+reports/
+reportes/
+
