@@ -1,0 +1,16 @@
+[Unit]
+Description=La Termal ERP (Gunicorn)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/la_termalerp/app
+EnvironmentFile=/etc/la_termalerp.env
+ExecStart=/opt/la_termalerp/app/.venv/bin/gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 60
+Restart=always
+RestartSec=3
+StandardOutput=append:/opt/la_termalerp/logs/server.log
+StandardError=append:/opt/la_termalerp/logs/server.err.log
+
+[Install]
+WantedBy=multi-user.target
