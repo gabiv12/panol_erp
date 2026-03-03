@@ -1,77 +1,84 @@
-# Limpieza del proyecto y armado de ZIP (pendrive)
+# Limpieza y release (pendrive) — La Termal
 
-Objetivo:
-- eliminar basura/cachés y carpetas de backups de parches,
-- evitar que se suban a git,
-- crear un ZIP portable para instalar en otra PC sin internet.
+Este documento describe el flujo **offline-first** para generar un ZIP de aplicación y un ZIP de datos, listos para copiar a pendrive y desplegar en el servidor Windows.
 
-## 1) Limpieza (Windows)
+## Objetivos
+
+- ZIP de aplicación (código) **sin** datos: sin `db.sqlite3` ni `media/`.
+- ZIP de datos (DATA): `db.sqlite3` + `media/`.
+- Scripts en Windows con encoding consistente (UTF-8 sin BOM) para evitar fallos por caracteres invisibles.
+- Release reproducible, con fallback si no hay `.git`.
+
+## 1) Limpieza del workspace (recomendado)
 
 Desde la raíz del proyecto:
 
 ```powershell
-# borrar caches Python
-Get-ChildItem -Recurse -Force -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-Get-ChildItem -Recurse -Force -File -Include *.pyc,*.pyo | Remove-Item -Force -ErrorAction SilentlyContinue
-
-# borrar caches típicos
-Remove-Item -Recurse -Force .pytest_cache,.mypy_cache,.ruff_cache -ErrorAction SilentlyContinue
-
-# borrar backups de parches en el proyecto
-Get-ChildItem -Directory -Filter "backup_patch_*" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-
-# borrar temporales de parches en el perfil
-Remove-Item -Recurse -Force "$env:USERPROFILE\_tmp_patch_*" -ErrorAction SilentlyContinue
+powershell -ExecutionPolicy Bypass -File scripts\windows\Clean-Workspace.ps1 -UpdateGitignore
 ```
 
-Alternativa: usar el script `scripts\windows\Clean-Workspace.ps1`.
+## 2) Normalizar encoding de scripts (recomendado)
 
-## 2) Ignorar basura en git (.gitignore)
-
-Asegurarse de ignorar:
-- `backup_patch_*`
-- `_tmp_patch_*`
-- `reports/`
-- `__pycache__/`, `*.pyc`
-
-Podés aplicar automáticamente con:
+Esto reescribe **solo encoding/line endings** (no cambia lógica):
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\windows\Update-Gitignore.ps1
+powershell -ExecutionPolicy Bypass -File scripts\windows\Normalize-ScriptsEncoding.ps1
 ```
 
-## 3) ZIP portable (recomendado)
-
-Si querés un ZIP con **solo lo versionado** (sin .git, sin basura):
+Modo prueba:
 
 ```powershell
-git archive --format zip --output "C:\Users\Usuario\Downloads\LaTermal_v0.1.2.zip" v0.1.2
+powershell -ExecutionPolicy Bypass -File scripts\windows\Normalize-ScriptsEncoding.ps1 -WhatIf
 ```
 
-Si querés un ZIP con el estado actual de `main`:
+## 3) Generar APP ZIP (código)
+
+### Opción A: repositorio con git disponible
+
+Si tenés git y existe `.git`, podés seguir usando el script habitual si ya te funciona.
+
+### Opción B: fallback (sin git / sin `.git`)
+
+Usar el script nuevo de fallback. `-OutZip` es obligatorio:
 
 ```powershell
-git archive --format zip --output "C:\Users\Usuario\Downloads\LaTermal_main.zip" HEAD
+powershell -ExecutionPolicy Bypass -File scripts\windows\Build-ReleaseZip-Fallback.ps1 `
+  -Ref HEAD `
+  -OutZip "D:\LaTermal_app_YYYYMMDD_HHmm.zip"
 ```
 
-Alternativa: usar `scripts\windows\Build-ReleaseZip.ps1`.
+El fallback copia a un staging temporal excluyendo artefactos típicos y luego comprime.
 
-## 4) Instalación desde pendrive (resumen)
+## 4) Generar DATA ZIP (db + media)
 
-1) Copiar ZIP a la PC servidor y descomprimir en `C:\LaTermal\`.
-2) Ejecutar el instalador:
+Desde la raíz del proyecto:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\windows\Install-All.ps1 -ProjectRoot "C:\LaTermal"
+$ts = Get-Date -Format "yyyyMMdd_HHmm"
+$dst = "D:\LaTermal_data_${ts}.zip"
+$temp = Join-Path $env:TEMP ("la_termal_data_" + $ts)
+Remove-Item -Recurse -Force $temp -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $temp | Out-Null
+
+Copy-Item -Force ".\db.sqlite3" (Join-Path $temp "db.sqlite3")
+if (Test-Path ".\media") { Copy-Item -Recurse -Force ".\media" (Join-Path $temp "media") }
+
+if (Test-Path $dst) { Remove-Item -Force $dst }
+Compress-Archive -Path (Join-Path $temp "*") -DestinationPath $dst -Force
+Remove-Item -Recurse -Force $temp
+$dst
 ```
 
-3) Validar:
-- `python manage.py test`
-- Abrir `http://127.0.0.1:8000/` o `http://IP_DEL_SERVIDOR:8000/` desde otra PC en LAN.
+## 5) Verificación rápida
 
-## 5) Interfaz “oculta” para administración rápida
-Para carga rápida sin link en menú, usar **Django Admin**:
-- URL: `/admin/`
-- Solo staff/superuser
-- Ideal para “formularios simples” sin crear endpoints nuevos.
+```powershell
+python manage.py test
+python manage.py makemigrations --check --dry-run
+python manage.py send_report_gerencia --period daily --outdir reports
+```
 
+## 6) Qué se copia al pendrive
+
+- `LaTermal_app_*.zip`
+- `LaTermal_data_*.zip`
+- (opcional) `scripts\windows\LaTermal_Deploy_Windows.ps1` para instalar por comando en el servidor.
