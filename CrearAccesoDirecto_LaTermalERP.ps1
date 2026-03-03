@@ -17,7 +17,7 @@ function Resolve-FullPath([string]$p) {
 $ProjectRootAbs = Resolve-FullPath $ProjectRoot
 if (-not (Test-Path -LiteralPath $ProjectRootAbs)) { throw "No existe ProjectRoot: $ProjectRootAbs" }
 
-$batName = if ($Mode -eq "LAN") { "LaTermal_Iniciar_LAN.bat" } else { "LaTermal_Iniciar.bat" }
+$batName = if ($Mode -eq "LAN") { "LaTermalERP_Iniciar_LAN.bat" } else { "LaTermalERP_Iniciar.bat" }
 $batPath = Join-Path $ProjectRootAbs $batName
 
 if (-not (Test-Path -LiteralPath $batPath)) {
