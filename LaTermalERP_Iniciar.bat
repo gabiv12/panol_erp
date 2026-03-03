@@ -3,7 +3,7 @@ setlocal
 
 REM ======================================================
 REM La Termal - Iniciar (modo local)
-REM - Este archivo debe estar en la carpeta del proyecto (donde estÃ¡ manage.py)
+REM - Este archivo debe estar en la carpeta del proyecto (donde esta manage.py)
 REM - No requiere internet
 REM ======================================================
 
