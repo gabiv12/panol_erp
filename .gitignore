@@ -1,52 +1,94 @@
-﻿# Python / Django
+﻿# =========================
+# Python / Django
+# =========================
 __pycache__/
 *.py[cod]
+*$py.class
+*.pyo
+*.pyc
+
+# Logs / temporales
 *.log
+*.tmp
+*.bak
+
+# Entornos
 .env
 .venv/
 venv/
-*.sqlite3
+ENV/
+env/
+.ENV/
+
+# SQLite (NO versionar datos)
 db.sqlite3
+*.sqlite3
 
-# Django static/media build artifacts
-staticfiles/
+# Django runtime
 media/
+staticfiles/
+logs/
+reports/
+reportes/
 
+# Settings locales (si alguna vez usás uno)
+local_settings.py
+
+# =========================
+# Testing / QA
+# =========================
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# =========================
 # Node / Tailwind
+# =========================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# OS / editor / backups
-.DS_Store
-backup_*/
-_patch_apply_*/
-*.zip
-seed/*.json
+# =========================
+# Build artifacts Python
+# =========================
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+pip-wheel-metadata/
 
-# Parches / backups locales
-_patch_*/
-backup_patch_*/
-*_patch_apply_*/
-*.zip
-# Reportes generados
-reports/
-reportes/
-
-
-# --- La Termal: runtime / patch artifacts (no versionar) ---
-backup_patch_*
-_tmp_patch_*
-_patch_*
-
-# Python caches
-*.pyc
-*.pyo
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
+# =========================
 # OS / Editor
+# =========================
+.DS_Store
 Thumbs.db
 Desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+
+# =========================
+# Parches / backups / artefactos locales (NO versionar)
+# =========================
+backup_*/
+backup_patch_*/
+_patch_*/
+_patch_backups/
+_tmp_patch_*/
+*_patch_apply_*/
+_patch_apply_*/
+*.zip
+
+# =========================
+# Seed / exports (si no querés versionarlos)
+# =========================
+seed/*.json
