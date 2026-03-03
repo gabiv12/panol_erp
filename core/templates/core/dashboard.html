@@ -155,6 +155,7 @@
         <div class="text-sm ti-subtitle">Pendiente</div>
         <div class="text-2xl font-semibold tabular-nums">{{ kpi_vtv_sin_fecha|default:0 }}</div>
       </div>
+    </div>
 
     <div class="mt-4 ti-card p-0 overflow-hidden">
       <div class="p-3 border-b border-slate-200 dark:border-slate-800">
@@ -162,44 +163,61 @@
         <div class="text-xs ti-subtitle">Primeros 12 vencimientos ordenados por prioridad.</div>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="ti-table">
-          <thead class="ti-thead">
+      <table class="ti-table w-full" style="width:100%;table-layout:fixed;min-width:0;">
+        <thead class="ti-thead">
+          <tr class="ti-tr">
+            <th class="ti-th w-[90px]">Interno</th>
+            <th class="ti-th hidden md:table-cell">Dominio</th>
+            <th class="ti-th w-[110px]">VTV</th>
+            <th class="ti-th w-[110px]">Estado</th>
+            <th class="ti-th w-[70px] text-right hidden sm:table-cell">Días</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in vencimientos_vtv|slice:":12" %}
             <tr class="ti-tr">
-              <th class="ti-th">Interno</th>
-              <th class="ti-th">Dominio</th>
-              <th class="ti-th">VTV</th>
-              <th class="ti-th">Estado</th>
-              <th class="ti-th text-right">Días</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for r in vencimientos_vtv|slice:":12" %}
-              <tr class="ti-tr">
-                <td class="ti-td font-semibold tabular-nums">{{ r.interno }}</td>
-                <td class="ti-td">{{ r.dominio|default:"—" }}</td>
-                <td class="ti-td">{% if r.fecha %}{{ r.fecha|date:"d/m/Y" }}{% else %}—{% endif %}</td>
-                <td class="ti-td">
-                  {% if r.badge == "critical" %}
-                    <span class="ti-badge-critical">{{ r.estado }}</span>
-                  {% elif r.badge == "high" %}
-                    <span class="ti-badge-high">{{ r.estado }}</span>
-                  {% elif r.badge == "ok" %}
-                    <span class="ti-badge-ok">{{ r.estado }}</span>
-                  {% else %}
-                    <span class="ti-badge-muted">{{ r.estado }}</span>
-                  {% endif %}
-                </td>
-                <td class="ti-td text-right tabular-nums">{% if r.dias is not None %}{{ r.dias }}{% else %}—{% endif %}</td>
-              </tr>
-            {% empty %}
-              <tr class="ti-tr"><td class="ti-td" colspan="5">Sin datos.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+              <td class="ti-td">
+                <div class="font-semibold tabular-nums">{{ r.interno }}</div>
+                <div class="text-xs ti-subtitle mt-0.5 md:hidden">{{ r.dominio|default:"—" }}</div>
+              </td>
 
+              <td class="ti-td hidden md:table-cell">
+                <div class="truncate">{{ r.dominio|default:"—" }}</div>
+              </td>
+
+              <td class="ti-td">
+                {% if r.fecha %}
+                  <span class="tabular-nums">{{ r.fecha|date:"d/m/Y" }}</span>
+                {% else %}
+                  — 
+                {% endif %}
+              </td>
+
+              <td class="ti-td">
+                {% if r.badge == "critical" %}
+                  <span class="ti-badge-critical">{{ r.estado }}</span>
+                {% elif r.badge == "high" %}
+                  <span class="ti-badge-high">{{ r.estado }}</span>
+                {% elif r.badge == "ok" %}
+                  <span class="ti-badge-ok">{{ r.estado }}</span>
+                {% else %}
+                  <span class="ti-badge-muted">{{ r.estado }}</span>
+                {% endif %}
+              </td>
+
+              <td class="ti-td text-right tabular-nums hidden sm:table-cell">
+                {% if r.dias is not None %}
+                  {{ r.dias }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr class="ti-tr"><td class="ti-td" colspan="5">Sin datos.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
     <div class="mt-3 flex flex-wrap gap-2">

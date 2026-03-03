@@ -34,3 +34,22 @@ backup_patch_*/
 reports/
 reportes/
 
+
+# --- La Termal: runtime / patch artifacts (no versionar) ---
+backup_patch_*
+_tmp_patch_*
+_patch_*
+
+# Python caches
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS / Editor
+Thumbs.db
+Desktop.ini
+
+
+
