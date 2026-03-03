@@ -2,7 +2,7 @@
 setlocal
 
 REM ======================================================
-REM La Termal ERP - Iniciar (modo LAN)
+REM La Termal - Iniciar (modo LAN)
 REM - Permite acceder desde otros dispositivos en la misma red
 REM - Requiere que Windows Firewall permita el puerto 8000
 REM - URL: http://IP_DE_ESTA_PC:8000/

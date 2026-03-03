@@ -2,7 +2,7 @@ param(
   [Parameter(Mandatory=$false)]
   [string]$ProjectRoot = ".",
   [Parameter(Mandatory=$false)]
-  [string]$ShortcutName = "La Termal ERP - Iniciar",
+  [string]$ShortcutName = "La Termal - Iniciar",
   [Parameter(Mandatory=$false)]
   [ValidateSet("Local","LAN")]
   [string]$Mode = "Local"
@@ -17,7 +17,7 @@ function Resolve-FullPath([string]$p) {
 $ProjectRootAbs = Resolve-FullPath $ProjectRoot
 if (-not (Test-Path -LiteralPath $ProjectRootAbs)) { throw "No existe ProjectRoot: $ProjectRootAbs" }
 
-$batName = if ($Mode -eq "LAN") { "LaTermalERP_Iniciar_LAN.bat" } else { "LaTermalERP_Iniciar.bat" }
+$batName = if ($Mode -eq "LAN") { "LaTermal_Iniciar_LAN.bat" } else { "LaTermal_Iniciar.bat" }
 $batPath = Join-Path $ProjectRootAbs $batName
 
 if (-not (Test-Path -LiteralPath $batPath)) {
@@ -32,7 +32,7 @@ $sc = $wsh.CreateShortcut($lnkPath)
 $sc.TargetPath = $batPath
 $sc.WorkingDirectory = $ProjectRootAbs
 $sc.WindowStyle = 1
-$sc.Description = "Inicia La Termal ERP (servidor local)"
+$sc.Description = "Inicia La Termal (servidor local)"
 $sc.Save()
 
 Write-Host "Acceso directo creado en: $lnkPath"

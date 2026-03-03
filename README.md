@@ -1,9 +1,9 @@
-# Pañol ERP
+# La Termal
 
-Sistema local-first (offline) orientado a la gestión operativa de una empresa de transporte.
+Sistema local-first (offline) orientado a la gestiÃ³n operativa de una empresa de transporte.
 
 Estado actual:
-- Módulos operativos: Inventario + Flota + Adjuntos
+- MÃ³dulos operativos: Inventario + Flota + Adjuntos
 - Tailwind local (offline)
 
 ## Requisitos
@@ -11,7 +11,7 @@ Estado actual:
 - Node.js (para Tailwind)
 - Entorno virtual Python (recomendado)
 
-## Instalación (local)
+## InstalaciÃ³n (local)
 1) Crear y activar entorno virtual
 2) Instalar dependencias Python
 3) Instalar dependencias Node
@@ -38,5 +38,5 @@ python manage.py runserver
 
 ## Migraciones en DB nueva vs DB existente
 
-Si estás trabajando con una base de datos ya usada (donde se aplicó `--fake` para alinear), revisá:
+Si estÃ¡s trabajando con una base de datos ya usada (donde se aplicÃ³ `--fake` para alinear), revisÃ¡:
 - `docs/MIGRACIONES.md`
